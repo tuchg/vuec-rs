@@ -1,0 +1,98 @@
+/// Name mapping for runtime helpers that need to be imported from 'vue' in
+/// generated code. Make sure these are correctly exported in the runtime!
+#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+pub enum RuntimeHelper {
+    Fragment,
+    Teleport,
+    Suspense,
+    KeepAlive,
+    BaseTransition,
+    OpenBlock,
+    CreateBlock,
+    CreateElementBlock,
+    CreateVNode,
+    CreateElementVNode,
+    CreateComment,
+    CreateText,
+    CreateStatic,
+    ResolveComponent,
+    ResolveDynamicComponent,
+    ResolveDirective,
+    ResolveFilter,
+    WithDirectives,
+    RenderList,
+    RenderSlot,
+    CreateSlots,
+    ToDisplayString,
+    MergeProps,
+    NormalizeClass,
+    NormalizeStyle,
+    NormalizeProps,
+    GuardReactiveProps,
+    ToHandlers,
+    Camelize,
+    Capitalize,
+    ToHandlerKey,
+    SetBlockTracking,
+    PushScopeId,
+    PopScopeId,
+    WithCtx,
+    Unref,
+    IsRef,
+    WithMemo,
+    IsMemoSame,
+    Custom,
+}
+
+impl RuntimeHelper {
+    #[inline(never)]
+    fn into_val(self) -> &'static str {
+        match self {
+            Self::Fragment => "Fragment",
+            Self::Teleport => "Teleport",
+            Self::Suspense => "Suspense",
+            Self::KeepAlive => "KeepAlive",
+            Self::BaseTransition => "BaseTransition",
+            Self::OpenBlock => "openBlock",
+            Self::CreateBlock => "createBlock",
+            Self::CreateElementBlock => "createElementBlock",
+            Self::CreateVNode => "createVNode",
+            Self::CreateElementVNode => "createElementVNode",
+            Self::CreateComment => "createCommentVNode",
+            Self::CreateText => "createTextVNode",
+            Self::CreateStatic => "createStaticVNode",
+            Self::ResolveComponent => "resolveComponent",
+            Self::ResolveDynamicComponent => "resolveDynamicComponent",
+            Self::ResolveDirective => "resolveDirective",
+            Self::ResolveFilter => "resolveFilter",
+            Self::WithDirectives => "withDirectives",
+            Self::RenderList => "renderList",
+            Self::RenderSlot => "renderSlot",
+            Self::CreateSlots => "createSlots",
+            Self::ToDisplayString => "toDisplayString",
+            Self::MergeProps => "mergeProps",
+            Self::NormalizeClass => "normalizeClass",
+            Self::NormalizeStyle => "normalizeStyle",
+            Self::NormalizeProps => "normalizeProps",
+            Self::GuardReactiveProps => "guardReactiveProps",
+            Self::ToHandlers => "toHandlers",
+            Self::Camelize => "camelize",
+            Self::Capitalize => "capitalize",
+            Self::ToHandlerKey => "toHandlerKey",
+            Self::SetBlockTracking => "setBlockTracking",
+            Self::PushScopeId => "pushScopeId",
+            Self::PopScopeId => "popScopeId",
+            Self::WithCtx => "withCtx",
+            Self::Unref => "unref",
+            Self::IsRef => "isRef",
+            Self::WithMemo => "withMemo",
+            Self::IsMemoSame => "isMemoSame",
+            Self::Custom => "",
+        }
+    }
+}
+
+#[test]
+fn test_runtime_helper() {
+    assert_eq!(RuntimeHelper::Fragment.into_val(), "Fragment");
+}
