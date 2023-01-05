@@ -1,0 +1,52 @@
+[workspace]
+members = [
+    "vuec-core",
+    "vuec-dom",
+    "vuec-sfc",
+    "vuec-ssr",
+    "vuec-cli",
+    "vuec-plugins",
+]
+[workspace.package]
+name = "vuec-rs"
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+authors = ["tuchg <ituchg@qq.com>"]
+homepage = "https://github.com/tuchg/vuec-rs"
+repository = "https://github.com/tuchg/vuec-rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace.dependencies]
+once_cell = "1"
+regex = "1"
+ahash = "0"
+
+#dotenv="0.15.0"
+#dotenv_codegen="0.15.0"
+#tracing = { version = "0.1", features = ["release_max_level_off"] }
+
+#serde = { version = "1.0", features = ["derive"] }
+#serde_json = "1.0"
+
+#swc = "0"
+#swc_common = "0"
+#
+#swc_ecma_ast = "0"
+#swc_ecma_parser = "0"
+#swc_ecma_codegen = "0"
+
+#swc_css_ast = "0.132.0"
+#swc_css_parser = "0.141.0"
+#swc_css_codegen = "0.142.0"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'
+incremental = false
+overflow-checks = false
