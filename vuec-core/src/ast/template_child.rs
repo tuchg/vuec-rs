@@ -47,6 +47,18 @@ impl Node<Text> {
     }
 }
 
+impl Default for Node<Text> {
+    fn default() -> Self {
+        Self {
+            kind: NodeType::Text,
+            loc: SourceLocation::default(),
+            inner: Text {
+                content: String::default(),
+            },
+        }
+    }
+}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Comment {
     content: String,

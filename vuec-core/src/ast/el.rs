@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::ast::{
-    attr::AttrsNode, expr::CallExpr, js_child::JSChild, template_child::TemplateChildNode,
+    attr::AttrsNode, expr::CallExpr, js_child::JSChildNode, template_child::TemplateChildNode,
     ElementType, NameSpace, Node, NodeType, PhantomType, SourceLocation,
 };
 
@@ -146,11 +146,7 @@ impl ElementNode {
         }
     }
 
-    pub fn loc_mut(&mut self) -> SourceLocation {
-        self.loc().clone()
-    }
-
-    pub fn set_loc(&mut self, loc: SourceLocation) {
+    pub fn make_loc(&mut self, loc: SourceLocation) {
         match self {
             ElementNode::Plain(el) => el.loc = loc,
             ElementNode::Component(el) => el.loc = loc,
@@ -191,32 +187,12 @@ impl ElementNode {
             ElementNode::Template(el) => el.inner.ns,
         }
     }
-    pub fn data(&self) -> (&String, bool, &Vec<TemplateChildNode>, &SourceLocation) {
+    pub fn data(&self) -> (&String, bool) {
         match &self {
-            ElementNode::Plain(el) => (
-                &el.inner.tag,
-                el.inner.is_self_closing,
-                &el.inner.children,
-                &el.loc,
-            ),
-            ElementNode::Component(el) => (
-                &el.inner.tag,
-                el.inner.is_self_closing,
-                &el.inner.children,
-                &el.loc,
-            ),
-            ElementNode::SlotOutlet(el) => (
-                &el.inner.tag,
-                el.inner.is_self_closing,
-                &el.inner.children,
-                &el.loc,
-            ),
-            ElementNode::Template(el) => (
-                &el.inner.tag,
-                el.inner.is_self_closing,
-                &el.inner.children,
-                &el.loc,
-            ),
+            ElementNode::Plain(el) => (&el.inner.tag, el.inner.is_self_closing),
+            ElementNode::Component(el) => (&el.inner.tag, el.inner.is_self_closing),
+            ElementNode::SlotOutlet(el) => (&el.inner.tag, el.inner.is_self_closing),
+            ElementNode::Template(el) => (&el.inner.tag, el.inner.is_self_closing),
         }
     }
 }
@@ -250,5 +226,5 @@ pub enum SlotOutletCodegen {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TemplateLit {
-    elements: Vec<Node<JSChild>>,
+    elements: Vec<Node<JSChildNode>>,
 }

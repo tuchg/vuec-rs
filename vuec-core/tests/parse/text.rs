@@ -29,7 +29,6 @@ fn simple_text() {
                     line: 1,
                     column: 10,
                 },
-                source: "some text".to_string(),
             },
         )))
     );
@@ -66,7 +65,6 @@ fn text_with_invalid_end_tag() {
                     line: 1,
                     column: 10,
                 },
-                source: "some text".to_string(),
             },
         )))
     );
@@ -93,7 +91,6 @@ fn text_with_interpolation() {
                     line: 1,
                     column: 6,
                 },
-                source: "some ".to_string(),
             },
         )))
     );
@@ -113,7 +110,6 @@ fn text_with_interpolation() {
                     line: 1,
                     column: 26,
                 },
-                source: " text".to_string(),
             },
         )))
     )
@@ -140,7 +136,6 @@ fn text_with_interpolation_which_has_lt() {
                     line: 1,
                     column: 6,
                 },
-                source: "some ".to_string(),
             },
         ))
     );
@@ -159,7 +154,6 @@ fn text_with_interpolation_which_has_lt() {
                     line: 1,
                     column: 27,
                 },
-                source: " text".to_string(),
             },
         ))
     )
@@ -191,7 +185,6 @@ fn text_with_mix_of_tags_and_interpolations() {
                     line: 1,
                     column: 6,
                 },
-                source: "some ".to_string(),
             },
         ))
     );
@@ -211,7 +204,6 @@ fn text_with_mix_of_tags_and_interpolations() {
                     line: 1,
                     column: 38,
                 },
-                source: " text".to_string(),
             },
         ))
     )
@@ -250,7 +242,6 @@ fn text_with_lonely_lt_dont_separate_nodes() {
                     line: 1,
                     column: 6,
                 },
-                source: "a < b".to_string(),
             },
         ))
     );
@@ -289,7 +280,6 @@ fn text_with_lonely_delimiters_dont_separate_nodes() {
                     line: 1,
                     column: 7,
                 },
-                source: "a {{ b".to_string(),
             },
         ))
     );

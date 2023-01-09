@@ -1,5 +1,5 @@
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum JSChild {
+pub enum JSChildNode {
     VNodeCall,
     CallExpr,
     ObjectExpr,

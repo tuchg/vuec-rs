@@ -23,15 +23,12 @@ mod whitespace_preserve;
 
 #[test]
 fn parse_with_correct_location_info() {
-    if let [Text(foo), Interpolation(bar), Text(but), Interpolation(baz)] = &Parser::base_parse(
-        r#"
+    let source = r#"
 foo
  is {{ bar }} but {{ baz }}"#
-            .trim(),
-        None,
-    )
-    .inner
-    .children[..]
+        .trim();
+    if let [Text(foo), Interpolation(bar), Text(but), Interpolation(baz)] =
+        &Parser::base_parse(source, None).inner.children[..]
     {
         let mut offset = 0;
         assert_eq!(
@@ -42,7 +39,7 @@ foo
                 column: 1,
             }
         );
-        offset += foo.loc.source.len();
+        offset += source[foo.loc.span()].len();
         assert_eq!(
             foo.loc.end,
             Position {
@@ -70,7 +67,7 @@ foo
                 column: 8,
             }
         );
-        offset += bar_inner.loc.source.len();
+        offset += source[bar_inner.loc.span()].len();
         assert_eq!(
             bar_inner.loc.end,
             Position {
@@ -96,7 +93,7 @@ foo
                 column: 14,
             }
         );
-        offset += but.loc.source.len();
+        offset += source[but.loc.span()].len();
         assert_eq!(
             but.loc.end,
             Position {
@@ -124,7 +121,7 @@ foo
                 column: 22,
             }
         );
-        offset += baz_inner.loc.source.len();
+        offset += source[baz_inner.loc.span()].len();
         assert_eq!(
             baz_inner.loc.end,
             Position {

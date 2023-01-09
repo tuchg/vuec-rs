@@ -7,15 +7,16 @@ repository.workspace = true
 license.workspace = true
 authors.workspace = true
 
-[lib]
+#[lib]
 #crate-type = ["staticlib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mimalloc = { version = "*", default-features = false }
 once_cell.workspace = true
 regex.workspace = true
-ahash.workspace = true
+#ahash.workspace = true
 #rand.workspace = true
 #dotenv.workspace = true
 #dotenv_codegen.workspace = true

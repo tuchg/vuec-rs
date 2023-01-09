@@ -29,7 +29,6 @@ fn empty_comment() {
                     line: 1,
                     column: 8,
                 },
-                source: "<!---->".to_string(),
             },
         ))
     );
@@ -62,7 +61,7 @@ fn comments_option() {
 fn comments_in_pre_tag_should_removed() {
     let raw_text = "<p/><!-- foo --><p/>";
     let ast_with_comments = Parser::base_parse(
-        &format!("<pre>{raw_text}</pre>"),
+        format!("<pre>{raw_text}</pre>").as_str(),
         Some(ParserOptions {
             comments: true,
             ..Default::default()

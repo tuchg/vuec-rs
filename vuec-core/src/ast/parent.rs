@@ -1,8 +1,8 @@
-use ahash::AHashSet;
+use std::collections::HashSet;
 
 use crate::{
     ast::{
-        js_child::JSChild,
+        js_child::JSChildNode,
         template_child::TemplateChildNode,
         utils::{SourceLocation, LOC_STUB},
         Node, NodeType,
@@ -12,8 +12,15 @@ use crate::{
 };
 
 /// RootNode | ElementNode | IfBranchNode | ForNode\
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Parent {}
+pub trait ParentNode {
+    fn children(&self) -> &Vec<TemplateChildNode>;
+}
+
+impl ParentNode for Node<Root> {
+    fn children(&self) -> &Vec<TemplateChildNode> {
+        &self.inner.children
+    }
+}
 
 #[derive(Clone, Debug, Eq)]
 pub struct Root {
@@ -21,10 +28,10 @@ pub struct Root {
     pub temps: usize,
     pub components: Vec<String>,
     pub directives: Vec<String>,
-    pub hoists: Vec<Node<JSChild>>,
+    pub hoists: Vec<JSChildNode>,
     pub imports: Vec<ImportItem>,
     pub children: Vec<TemplateChildNode>,
-    pub helpers: AHashSet<RuntimeHelper>,
+    pub helpers: HashSet<RuntimeHelper>,
 
     pub ssr_helpers: Option<Vec<RuntimeHelper>>,
     pub codegen_node: Option<Node<RootCodegen>>,
@@ -48,8 +55,8 @@ impl Node<Root> {
             inner: Root {
                 children,
                 helpers: Default::default(),
-                components: Default::default(),
-                directives: Default::default(),
+                components: vec![],
+                directives: vec![],
                 hoists: Default::default(),
                 imports: Default::default(),
                 cached: 0,

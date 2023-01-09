@@ -6,7 +6,7 @@ use crate::{
 #[derive(Clone, PartialEq, Debug, Eq)]
 pub enum AttrsNode {
     Attr(Node<Attribute>),
-    Dir(Node<Directive>),
+    Dir(Box<Node<Directive>>),
 }
 
 impl AttrsNode {
@@ -21,7 +21,9 @@ impl AttrsNode {
         modifiers: Vec<String>,
         loc: SourceLocation,
     ) -> Self {
-        Self::Dir(Node::<Directive>::new(name, arg, expr, modifiers, loc))
+        Self::Dir(Box::from(Node::<Directive>::new(
+            name, arg, expr, modifiers, loc,
+        )))
     }
 
     pub fn name(&self) -> &String {

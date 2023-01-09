@@ -1,4 +1,4 @@
-use crate::ast::{js_child::JSChild, ConstantType, Node, NodeType, SourceLocation};
+use crate::ast::{js_child::JSChildNode, ConstantType, Node, NodeType, SourceLocation};
 
 /// SimpleExpressionNode | CompoundExpressionNode
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -14,7 +14,7 @@ pub struct SimpleExpr {
     pub const_type: ConstantType,
     /// Indicates this is an identifier for a hoist vnode call and points to the
     /// hoisted node.
-    pub hoisted: Option<Node<JSChild>>,
+    pub hoisted: Option<Node<JSChildNode>>,
     /// an expression parsed as the params of a function will track
     /// the identifiers declared inside the function body.
     pub identifiers: Option<Vec<String>>,

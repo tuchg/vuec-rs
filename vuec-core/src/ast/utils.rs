@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::ops::Range;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position {
@@ -13,14 +13,12 @@ pub struct Position {
 pub struct SourceLocation {
     pub start: Position,
     pub end: Position,
-    pub source: String,
 }
 
 /// Some expressions, e.g. sequence and conditional expressions, are never
 /// associated with template nodes, so their source locations are just a stub.
 /// Container types like CompoundExpression also don't need a real location.
 pub const LOC_STUB: SourceLocation = SourceLocation {
-    source: String::new(),
     start: Position {
         line: 1,
         column: 1,
@@ -35,26 +33,28 @@ pub const LOC_STUB: SourceLocation = SourceLocation {
 
 impl Default for SourceLocation {
     fn default() -> Self {
-        LOC_STUB.clone()
+        LOC_STUB
     }
 }
 
 impl Position {
     /// advance by mutation without cloning (for performance reasons), since this
     /// gets called a lot in the parser
-    pub fn advance_position_with_mutation(&mut self, source: &String, n: usize) {
+    pub fn advance_position_with_mutation(&mut self, source: &str, n: usize) {
         let mut lines_cnt = 0;
         let mut last_new_line = 0;
         let mut has_new_line = false;
 
-        let source = source.as_bytes();
-        for i in 0..min(n, source.len()) {
-            if source[i] == 10 {
+        source
+            .chars()
+            .enumerate()
+            .take(n)
+            .filter(|item| item.1 == '\n')
+            .for_each(|item| {
                 lines_cnt += 1;
-                last_new_line = i;
+                last_new_line = item.0;
                 has_new_line = true;
-            }
-        }
+            });
 
         self.offset += n;
         self.line += lines_cnt;
@@ -66,7 +66,7 @@ impl Position {
         }
     }
 
-    pub fn advance_position_with_clone(&self, source: &String, n: Option<usize>) -> Position {
+    pub fn advance_position_with_clone(&self, source: &str, n: Option<usize>) -> Position {
         let n = n.unwrap_or(source.len());
         let mut cloned = *self;
         cloned.advance_position_with_mutation(source, n);
@@ -75,15 +75,17 @@ impl Position {
 }
 
 impl SourceLocation {
-    fn inner_range(&mut self, offset: usize, len: usize) -> Self {
+    #[inline]
+    pub fn span(&self) -> Range<usize> {
+        self.start.offset..self.end.offset
+    }
+
+    pub fn inner_range(&mut self, source: &str, offset: usize, len: usize) -> Self {
         // /// __TEST__
         // assert!(offset <= self.source.len());
-        let source = self.source[offset..offset + len].to_string();
+        // let source = &self.source[offset..offset + len];
         let mut new_loc = SourceLocation {
-            source,
-            start: self
-                .start
-                .advance_position_with_clone(&self.source, Some(offset)),
+            start: self.start.advance_position_with_clone(source, Some(offset)),
             end: self.end,
         };
         if len > 0 {
@@ -91,7 +93,7 @@ impl SourceLocation {
             // assert!(offset + length <= self.source.len());
             new_loc
                 .end
-                .advance_position_with_mutation(&new_loc.source, offset + len);
+                .advance_position_with_mutation(&source[new_loc.span()], offset + len);
         }
         new_loc
     }

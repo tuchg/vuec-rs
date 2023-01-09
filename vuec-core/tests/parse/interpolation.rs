@@ -31,7 +31,6 @@ fn simple_interpolation() {
                         line: 1,
                         column: 10,
                     },
-                    source: "message".to_string(),
                 },
             ),
             SourceLocation {
@@ -45,7 +44,6 @@ fn simple_interpolation() {
                     line: 1,
                     column: 12,
                 },
-                source: "{{message}}".to_string(),
             },
         ))
     );
@@ -74,7 +72,6 @@ fn it_can_have_tag_like_notation() {
                         line: 1,
                         column: 7,
                     },
-                    source: "a<b".to_string(),
                 },
             ),
             SourceLocation {
@@ -88,7 +85,6 @@ fn it_can_have_tag_like_notation() {
                     line: 1,
                     column: 10,
                 },
-                source: "{{ a<b }}".to_string(),
             },
         ))
     );
@@ -123,7 +119,6 @@ fn it_can_have_tag_like_notation_3() {
                         line: 1,
                         column: 17,
                     },
-                    source: r#""</div>""#.to_string(),
                 },
             ),
             SourceLocation {
@@ -137,7 +132,6 @@ fn it_can_have_tag_like_notation_3() {
                     line: 1,
                     column: 20,
                 },
-                source: r#"{{ "</div>" }}"#.to_string(),
             },
         ))
     );
@@ -176,7 +170,6 @@ fn custom_delimiters() {
                         line: 1,
                         column: 8,
                     },
-                    source: "msg".to_string(),
                 },
             ),
             SourceLocation {
@@ -190,7 +183,6 @@ fn custom_delimiters() {
                     line: 1,
                     column: 9,
                 },
-                source: "{msg}".to_string(),
             },
         ))
     );

@@ -17,6 +17,8 @@ use crate::ast::utils::SourceLocation;
 #[derive(Clone, PartialEq, Debug, Copy, Eq)]
 pub enum NameSpace {
     Html,
+    SVG,
+    MathML,
 }
 
 #[derive(Clone, PartialEq, Debug)]

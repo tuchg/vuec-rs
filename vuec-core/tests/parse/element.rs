@@ -38,7 +38,6 @@ fn simple_div() {
                         line: 1,
                         column: 11,
                     },
-                    source: "hello".to_string(),
                 },
             ))],
             SourceLocation {
@@ -52,7 +51,6 @@ fn simple_div() {
                     line: 1,
                     column: 17,
                 },
-                source: "<div>hello</div>".to_string(),
             },
         ))
     )
@@ -83,7 +81,6 @@ fn empty() {
                     line: 1,
                     column: 12,
                 },
-                source: "<div></div>".to_string(),
             },
         ))
     )
@@ -114,7 +111,6 @@ fn self_closing() {
                     line: 1,
                     column: 7,
                 },
-                source: "<div/>".to_string(),
             },
         ))
     )
@@ -152,7 +148,6 @@ fn void_element() {
                     line: 1,
                     column: 6,
                 },
-                source: "<img>".to_string(),
             },
         ))
     )
@@ -356,7 +351,6 @@ fn attribute_with_no_value() {
                         line: 1,
                         column: 8,
                     },
-                    source: "id".to_string(),
                 },
             )],
             vec![],
@@ -371,7 +365,6 @@ fn attribute_with_no_value() {
                     line: 1,
                     column: 15,
                 },
-                source: r#"<div id></div>"#.to_string(),
             },
         ))
     );
@@ -404,7 +397,6 @@ fn attribute_with_empty_value_double_quote() {
                             line: 1,
                             column: 11,
                         },
-                        source: r#""""#.to_string(),
                     },
                 )),
                 SourceLocation {
@@ -418,7 +410,6 @@ fn attribute_with_empty_value_double_quote() {
                         line: 1,
                         column: 11,
                     },
-                    source: r#"id="""#.to_string(),
                 },
             )],
             vec![],
@@ -433,7 +424,6 @@ fn attribute_with_empty_value_double_quote() {
                     line: 1,
                     column: 18,
                 },
-                source: r#"<div id=""></div>"#.to_string(),
             },
         ))
     );
@@ -466,7 +456,6 @@ fn attribute_with_empty_value_single_quote() {
                             line: 1,
                             column: 11,
                         },
-                        source: r#"''"#.to_string(),
                     },
                 )),
                 SourceLocation {
@@ -480,7 +469,6 @@ fn attribute_with_empty_value_single_quote() {
                         line: 1,
                         column: 11,
                     },
-                    source: r#"id=''"#.to_string(),
                 },
             )],
             vec![],
@@ -495,7 +483,6 @@ fn attribute_with_empty_value_single_quote() {
                     line: 1,
                     column: 18,
                 },
-                source: r#"<div id=''></div>"#.to_string(),
             },
         ))
     );
@@ -528,7 +515,6 @@ fn attr_with_value_double_quote() {
                             line: 1,
                             column: 13,
                         },
-                        source: r#"">'""#.to_string(),
                     },
                 )),
                 SourceLocation {
@@ -542,7 +528,6 @@ fn attr_with_value_double_quote() {
                         line: 1,
                         column: 13,
                     },
-                    source: r#"id=">'""#.to_string(),
                 },
             )],
             vec![],
@@ -557,7 +542,6 @@ fn attr_with_value_double_quote() {
                     line: 1,
                     column: 20,
                 },
-                source: r#"<div id=">'"></div>"#.to_string(),
             },
         ))
     );
@@ -589,7 +573,6 @@ fn attr_with_value_single_quote() {
                             line: 1,
                             column: 13,
                         },
-                        source: r#"'>"'"#.to_string(),
                     },
                 )),
                 SourceLocation {
@@ -603,7 +586,6 @@ fn attr_with_value_single_quote() {
                         line: 1,
                         column: 13,
                     },
-                    source: r#"id='>"'"#.to_string(),
                 },
             )],
             vec![],
@@ -618,7 +600,6 @@ fn attr_with_value_single_quote() {
                     line: 1,
                     column: 20,
                 },
-                source: r#"<div id='>"'></div>"#.to_string(),
             },
         ))
     );
@@ -650,7 +631,6 @@ fn attr_with_value_unquoted() {
                             line: 1,
                             column: 11,
                         },
-                        source: r#"a/"#.to_string(),
                     },
                 )),
                 SourceLocation {
@@ -664,7 +644,6 @@ fn attr_with_value_unquoted() {
                         line: 1,
                         column: 11,
                     },
-                    source: r#"id=a/"#.to_string(),
                 },
             )],
             vec![],
@@ -679,7 +658,6 @@ fn attr_with_value_unquoted() {
                     line: 1,
                     column: 18,
                 },
-                source: r#"<div id=a/></div>"#.to_string(),
             },
         ))
     );
@@ -712,7 +690,6 @@ fn multiple_attributes() {
                                 line: 1,
                                 column: 10,
                             },
-                            source: r#"a"#.to_string(),
                         },
                     )),
                     SourceLocation {
@@ -726,7 +703,6 @@ fn multiple_attributes() {
                             line: 1,
                             column: 10,
                         },
-                        source: r#"id=a"#.to_string(),
                     },
                 ),
                 AttrsNode::new_attr(
@@ -744,7 +720,6 @@ fn multiple_attributes() {
                                 line: 1,
                                 column: 20,
                             },
-                            source: r#""c""#.to_string(),
                         },
                     )),
                     SourceLocation {
@@ -758,7 +733,6 @@ fn multiple_attributes() {
                             line: 1,
                             column: 20,
                         },
-                        source: r#"class="c""#.to_string(),
                     },
                 ),
                 AttrsNode::new_attr(
@@ -775,7 +749,6 @@ fn multiple_attributes() {
                             line: 1,
                             column: 26,
                         },
-                        source: r#"inert"#.to_string(),
                     },
                 ),
                 AttrsNode::new_attr(
@@ -793,7 +766,6 @@ fn multiple_attributes() {
                                 line: 1,
                                 column: 35,
                             },
-                            source: "''".to_string(),
                         },
                     )),
                     SourceLocation {
@@ -807,7 +779,6 @@ fn multiple_attributes() {
                             line: 1,
                             column: 35,
                         },
-                        source: "style=''".to_string(),
                     },
                 ),
             ],
@@ -823,7 +794,6 @@ fn multiple_attributes() {
                     line: 1,
                     column: 42,
                 },
-                source: r#"<div id=a class="c" inert style=''></div>"#.to_string(),
             },
         ))
     );
@@ -856,7 +826,6 @@ fn class_attrs_should_ignore_whitespace_when_parsed() {
                             line: 3,
                             column: 3,
                         },
-                        source: "\" \n\t c \t\n \"".to_string(),
                     },
                 )),
                 SourceLocation {
@@ -870,7 +839,6 @@ fn class_attrs_should_ignore_whitespace_when_parsed() {
                         line: 3,
                         column: 3,
                     },
-                    source: "class=\" \n\t c \t\n \"".to_string(),
                 },
             )],
             vec![],
@@ -885,7 +853,6 @@ fn class_attrs_should_ignore_whitespace_when_parsed() {
                     line: 3,
                     column: 10,
                 },
-                source: "<div class=\" \n\t c \t\n \"></div>".to_string(),
             },
         ))
     );
@@ -921,7 +888,6 @@ fn directive_with_no_value() {
                     line: 1,
                     column: 10,
                 },
-                source: "v-if".to_string(),
             },
         )
     );
@@ -958,7 +924,6 @@ fn directive_with_value() {
                         line: 1,
                         column: 13,
                     },
-                    source: "a".to_string(),
                 },
             )),
             vec![],
@@ -973,7 +938,6 @@ fn directive_with_value() {
                     line: 1,
                     column: 14,
                 },
-                source: r#"v-if="a""#.to_string(),
             },
         )
     );
@@ -1009,7 +973,6 @@ fn directive_with_argument() {
                         line: 1,
                         column: 16,
                     },
-                    source: "click".to_string(),
                 },
             )),
             None,
@@ -1025,7 +988,6 @@ fn directive_with_argument() {
                     line: 1,
                     column: 16,
                 },
-                source: "v-on:click".to_string(),
             },
         )
     );
@@ -1061,7 +1023,6 @@ fn directive_with_dyn_argument() {
                         line: 1,
                         column: 18,
                     },
-                    source: "[event]".to_string(),
                 },
             )),
             None,
@@ -1077,7 +1038,6 @@ fn directive_with_dyn_argument() {
                     line: 1,
                     column: 18,
                 },
-                source: "v-on:[event]".to_string(),
             },
         )
     );
@@ -1112,7 +1072,6 @@ fn directive_with_a_modifier() {
                     line: 1,
                     column: 16,
                 },
-                source: "v-on.enter".to_string(),
             },
         )
     );
@@ -1147,7 +1106,6 @@ fn directive_with_two_modifiers() {
                     line: 1,
                     column: 22,
                 },
-                source: "v-on.enter.exact".to_string(),
             },
         )
     );
@@ -1182,7 +1140,6 @@ fn directive_with_argument_and_modifiers() {
                         line: 1,
                         column: 16,
                     },
-                    source: "click".to_string(),
                 },
             )),
             None,
@@ -1198,7 +1155,6 @@ fn directive_with_argument_and_modifiers() {
                     line: 1,
                     column: 28,
                 },
-                source: "v-on:click.enter.exact".to_string(),
             },
         )
     );
@@ -1233,7 +1189,6 @@ fn directive_with_dyn_argument_and_modifiers() {
                         line: 1,
                         column: 16,
                     },
-                    source: "[a.b]".to_string(),
                 },
             )),
             None,
@@ -1249,7 +1204,6 @@ fn directive_with_dyn_argument_and_modifiers() {
                     line: 1,
                     column: 22,
                 },
-                source: "v-on:[a.b].camel".to_string(),
             },
         )
     );
@@ -1292,7 +1246,6 @@ fn directive_with_no_name() {
                     line: 1,
                     column: 8,
                 },
-                source: "v-".to_string(),
             },
         )
     );
@@ -1328,7 +1281,6 @@ fn v_bind_shorthand() {
                         line: 1,
                         column: 8,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1346,7 +1298,6 @@ fn v_bind_shorthand() {
                         line: 1,
                         column: 10,
                     },
-                    source: "b".to_string(),
                 },
             )),
             vec![],
@@ -1361,7 +1312,6 @@ fn v_bind_shorthand() {
                     line: 1,
                     column: 10,
                 },
-                source: ":a=b".to_string(),
             },
         )
     );
@@ -1396,7 +1346,6 @@ fn v_bind_dot_prop_shorthand() {
                         line: 1,
                         column: 8,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1414,7 +1363,6 @@ fn v_bind_dot_prop_shorthand() {
                         line: 1,
                         column: 10,
                     },
-                    source: "b".to_string(),
                 },
             )),
             vec!["prop".to_string()],
@@ -1429,7 +1377,6 @@ fn v_bind_dot_prop_shorthand() {
                     line: 1,
                     column: 10,
                 },
-                source: ".a=b".to_string(),
             },
         )
     );
@@ -1465,7 +1412,6 @@ fn v_bind_shorthand_with_modifier() {
                         line: 1,
                         column: 8,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1483,7 +1429,6 @@ fn v_bind_shorthand_with_modifier() {
                         line: 1,
                         column: 15,
                     },
-                    source: "b".to_string(),
                 },
             )),
             vec!["sync".to_string()],
@@ -1498,7 +1443,6 @@ fn v_bind_shorthand_with_modifier() {
                     line: 1,
                     column: 15,
                 },
-                source: ":a.sync=b".to_string(),
             },
         )
     );
@@ -1534,7 +1478,6 @@ fn v_on_shorthand() {
                         line: 1,
                         column: 8,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1552,7 +1495,6 @@ fn v_on_shorthand() {
                         line: 1,
                         column: 10,
                     },
-                    source: "b".to_string(),
                 },
             )),
             vec![],
@@ -1567,7 +1509,6 @@ fn v_on_shorthand() {
                     line: 1,
                     column: 10,
                 },
-                source: "@a=b".to_string(),
             },
         )
     );
@@ -1602,7 +1543,6 @@ fn v_on_shorthand_with_modifier() {
                         line: 1,
                         column: 8,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1620,7 +1560,6 @@ fn v_on_shorthand_with_modifier() {
                         line: 1,
                         column: 16,
                     },
-                    source: "b".to_string(),
                 },
             )),
             vec!["enter".to_string()],
@@ -1635,7 +1574,6 @@ fn v_on_shorthand_with_modifier() {
                     line: 1,
                     column: 16,
                 },
-                source: "@a.enter=b".to_string(),
             },
         )
     );
@@ -1671,7 +1609,6 @@ fn v_slot_shorthand() {
                         line: 1,
                         column: 9,
                     },
-                    source: "a".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1689,7 +1626,6 @@ fn v_slot_shorthand() {
                         line: 1,
                         column: 16,
                     },
-                    source: "{ b }".to_string(),
                 },
             )),
             vec![],
@@ -1704,7 +1640,6 @@ fn v_slot_shorthand() {
                     line: 1,
                     column: 17,
                 },
-                source: r#"#a="{ b }""#.to_string(),
             },
         )
     );
@@ -1745,7 +1680,6 @@ fn v_pre() {
                         line: 1,
                         column: 21,
                     },
-                    source: r#""foo""#.to_string(),
                 },
             )),
             SourceLocation {
@@ -1759,7 +1693,6 @@ fn v_pre() {
                     line: 1,
                     column: 21,
                 },
-                source: r#":id="foo""#.to_string(),
             },
         )
     );
@@ -1800,7 +1733,6 @@ fn v_pre() {
                         line: 2,
                         column: 9,
                     },
-                    source: "id".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1818,7 +1750,6 @@ fn v_pre() {
                         line: 2,
                         column: 14,
                     },
-                    source: "foo".to_string(),
                 },
             )),
             vec![],
@@ -1833,7 +1764,6 @@ fn v_pre() {
                     line: 2,
                     column: 15,
                 },
-                source: r#":id="foo""#.to_string(),
             },
         )
     );
@@ -1883,7 +1813,6 @@ fn self_closing_v_pre() {
                         line: 2,
                         column: 9,
                     },
-                    source: "id".to_string(),
                 },
             )),
             Some(Node::new_simple_expr(
@@ -1901,7 +1830,6 @@ fn self_closing_v_pre() {
                         line: 2,
                         column: 14,
                     },
-                    source: "foo".to_string(),
                 },
             )),
             vec![],
@@ -1916,7 +1844,6 @@ fn self_closing_v_pre() {
                     line: 2,
                     column: 15,
                 },
-                source: r#":id="foo""#.to_string(),
             },
         )
     );
@@ -1957,7 +1884,6 @@ fn end_tags_case_insensitive() {
                     line: 1,
                     column: 11,
                 },
-                source: "hello".to_string(),
             },
         ))
     );

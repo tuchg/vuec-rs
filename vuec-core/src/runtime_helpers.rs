@@ -1,6 +1,6 @@
 /// Name mapping for runtime helpers that need to be imported from 'vue' in
 /// generated code. Make sure these are correctly exported in the runtime!
-#[derive(Clone, PartialEq, Debug, Eq, Hash)]
+#[derive(Clone, PartialEq, Debug, Eq, Hash, Copy)]
 pub enum RuntimeHelper {
     Fragment,
     Teleport,
@@ -46,7 +46,7 @@ pub enum RuntimeHelper {
 
 impl RuntimeHelper {
     #[inline(never)]
-    fn into_val(self) -> &'static str {
+    pub fn into_str(&self) -> &'static str {
         match self {
             Self::Fragment => "Fragment",
             Self::Teleport => "Teleport",
@@ -94,5 +94,5 @@ impl RuntimeHelper {
 
 #[test]
 fn test_runtime_helper() {
-    assert_eq!(RuntimeHelper::Fragment.into_val(), "Fragment");
+    assert_eq!(RuntimeHelper::Fragment.into_str(), "Fragment");
 }

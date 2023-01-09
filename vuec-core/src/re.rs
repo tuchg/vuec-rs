@@ -16,7 +16,7 @@ lazy_re!(
         .case_insensitive(true)
         .build()
 );
-lazy_re!(ADVANCE_SPACE_RE, Regex::new(r"^[\t\r\n\f ]+"));
+// lazy_re!(ADVANCE_SPACE_RE, Regex::new(r"^[\t\r\n\f ]+"));
 lazy_re!(COMMENT_RE, Regex::new(r"--(!)?>"));
 lazy_re!(TEXT_RE1, Regex::new(r"[^\t\r\n\f ]"));
 lazy_re!(TEXT_RE2, Regex::new("[\r\n]"));
@@ -36,7 +36,7 @@ lazy_re!(
 lazy_re!(DIR_RE, Regex::new(r"^(v-[A-Za-z0-9-]|:|\.|@|#)"));
 lazy_re!(UNQUOTED_RE, Regex::new(r"^[^\t\r\n\f >]+"));
 lazy_re!(UNEXPECTED_CHARS_IN_UNQUOTED_RE, Regex::new("[\"'<=`]"));
-lazy_re!(TAG_NAME_RE, Regex::new(r"^[A-Z]"));
+// lazy_re!(TAG_NAME_RE, Regex::new(r"^[A-Z]"));
 
 ///// other REs
 
@@ -60,3 +60,10 @@ lazy_re!(
 
 lazy_re!(STRIP_PARENS_RE, Regex::new(r"^\(|\)$"));
 lazy_re!(WHITESPACE_RE, Regex::new(r"[\\s\n]"));
+
+lazy_re!(
+    STRIP_STRING_RE,
+    Regex::new(
+        r#"'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*\$\{|\}(?:[^`\\]|\\.)*`|`(?:[^`\\]|\\.)*`"#
+    )
+);
