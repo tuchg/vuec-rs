@@ -528,6 +528,7 @@ name = "vuec-cli"
 version = "0.0.0"
 dependencies = [
  "criterion",
+ "regex",
  "vuec-core",
 ]
 

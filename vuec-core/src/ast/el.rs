@@ -146,7 +146,7 @@ impl ElementNode {
         }
     }
 
-    pub fn make_loc(&mut self, loc: SourceLocation) {
+    pub fn new_loc(&mut self, loc: SourceLocation) {
         match self {
             ElementNode::Plain(el) => el.loc = loc,
             ElementNode::Component(el) => el.loc = loc,

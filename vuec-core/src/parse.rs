@@ -12,11 +12,7 @@ use crate::{
     },
     errors::{CompilerError, ErrorCode},
     options::{ParserOptions, WhiteSpaceStrategy},
-    re::{
-        ATTR_NAME_RE, ATTR_VALUE_RE, ATTR_VALUE_SPACE_RE, COMMENT_RE, DIR_NAME_RE, DIR_RE,
-        END_TAG_OPEN_RE, MISSING_SPACE_ATTRIBUTES_RE, TAG_OPEN_RE, TEXT_RE1, TEXT_RE2, TEXT_RE3,
-        TEXT_RE4, UNEXPECTED_CHARS_IN_UNQUOTED_RE, UNEXPECTED_CHAR_IN_ATTR_NAME_RE, UNQUOTED_RE,
-    },
+    re::{COMMENT_RE, DIR_NAME_RE, UNQUOTED_RE},
     runtime_helpers::RuntimeHelper,
 };
 
@@ -42,8 +38,8 @@ impl Parser {
         let mut ctx = ParserContext::new(content, options);
 
         let start = ctx.cursor();
+        let children = ctx.parse_children(&mut Vec::with_capacity(5), TextMode::Data);
 
-        let children = ctx.parse_children(&mut vec![], TextMode::Data);
         let loc = Some(ctx.selection(start, None));
         Node::<Root>::new(children, loc)
     }
@@ -91,11 +87,11 @@ impl<'a> ParserContext<'a> {
         ancestors: &mut Vec<ElementNode>,
         mode: TextMode,
     ) -> Vec<TemplateChildNode> {
-        let mut nodes: Vec<Option<TemplateChildNode>> = vec![];
+        let mut nodes: Vec<Option<TemplateChildNode>> = Vec::with_capacity(5);
         let ns = ancestors.last().map_or(NameSpace::Html, |p| p.ns());
 
         while !self.is_end(mode, ancestors) {
-            let mut s_iter = self.source.chars();
+            let mut s_iter = self.source.bytes();
 
             let mut node: Vec<TemplateChildNode> = Vec::with_capacity(1);
 
@@ -110,7 +106,7 @@ impl<'a> ParserContext<'a> {
                     // https://html.spec.whatwg.org/multipage/parsing.html#tag-open-state
                     if self.source.len() == 1 {
                         self.emit_error(ErrorCode::EOFBeforeTagName, Some(1), None);
-                    } else if s_nth1 == '!' {
+                    } else if s_nth1 == b'!' {
                         // https://html.spec.whatwg.org/multipage/parsing.html#markup-declaration-open-state
                         if self.source.starts_with("<!--") {
                             node.push(TemplateChildNode::new_comment(self.parse_comment()));
@@ -128,12 +124,12 @@ impl<'a> ParserContext<'a> {
                             self.emit_error(ErrorCode::IncorrectlyOpenedComment, None, None);
                             node.push(TemplateChildNode::new_comment(self.parse_bogus_comment()));
                         }
-                    } else if s_nth1 == '/' {
+                    } else if s_nth1 == b'/' {
                         //https://html.spec.whatwg.org/multipage/parsing.html#end-tag-open-state
                         let s_nth2 = s_iter.nth(2).unwrap();
                         if self.source.len() == 2 {
                             self.emit_error(ErrorCode::EOFBeforeTagName, Some(2), None);
-                        } else if s_nth2 == '>' {
+                        } else if s_nth2 == b'>' {
                             self.emit_error(ErrorCode::MissingEndTagName, Some(2), None);
                             self.advance_by(3);
                             continue;
@@ -155,7 +151,7 @@ impl<'a> ParserContext<'a> {
                         }
                         // todo! vue2
                         // 2.x <template> with no directive compat
-                    } else if s_nth1 == '?' {
+                    } else if s_nth1 == b'?' {
                         self.emit_error(
                             ErrorCode::UnexpectedQuestionMarkInsteadOfTagName,
                             Some(1),
@@ -188,10 +184,13 @@ impl<'a> ParserContext<'a> {
                     let node = &nodes[i];
                     if let Some(TemplateChildNode::Text(node)) = node {
                         let mut text = Node::<Text>::default();
+                        // to reduce mem alloc
                         text.clone_from(node);
+                        // let mut text = node.clone();
+
                         if !self.in_pre {
-                            if !TEXT_RE1
-                                .is_match(&text.inner.content)
+                            // Regex::new(r"[^\t\r\n\f ]")
+                            if !text.inner.content.bytes().any(|c| !c.is_ascii_whitespace())
                             {
                                 // Remove if:
                                 // - the whitespace is the first or last node, or:
@@ -212,7 +211,8 @@ impl<'a> ParserContext<'a> {
                                                     (TemplateChildNode::Comment(_), TemplateChildNode::Comment(_)) |
                                                     (TemplateChildNode::Comment(_), TemplateChildNode::Element(_)) |
                                                     (TemplateChildNode::Element(_), TemplateChildNode::Comment(_)) => true,
-                                                    (TemplateChildNode::Element(_), TemplateChildNode::Element(_)) => TEXT_RE2.is_match(&text.inner.content),
+                                                    // Regex::new("[\r\n]")
+                                                    (TemplateChildNode::Element(_), TemplateChildNode::Element(_)) => text.inner.content.bytes().any(|c| matches!(c,b'\n'|b'\r')),
                                                     (_, _) => false
                                                 }
                                             } else { false }
@@ -230,14 +230,14 @@ impl<'a> ParserContext<'a> {
                                 // in condense mode, consecutive whitespaces in text are
                                 // condensed
                                 // down to a single space.
-                                text.inner.content = TEXT_RE3
-                                    .replace_all(&text.inner.content, " ").to_string()
+                                // Regex::new(r"[\t\r\n\f ]+")
+                                text.inner.content = replace_continuous_whitespace(&text.inner.content);
                             }
                         } else {
                             // #6410 normalize windows newlines in <pre>:
                             // in SSR, browsers normalize server-rendered \r\n into a single \n
                             // in the DOM
-                            text.inner.content = text.inner.content.replace("\r\n", "\n").to_string()
+                            text.inner.content = text.inner.content.replace("\r\n", "\n")
                         }
                         // sync change of text_node
                         if nodes[i].is_some() {
@@ -245,7 +245,6 @@ impl<'a> ParserContext<'a> {
                         }
                     } else if let Some(TemplateChildNode::Comment(_)) = node && !self.options.comments {
                         // Remove comment nodes if desired by configuration.
-                        // removed_whitespace.push(i)
                         nodes[i] = None;
                     }
                 }
@@ -255,7 +254,7 @@ impl<'a> ParserContext<'a> {
                     // remove leading newline per html spec
                     // https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element// remove leading newline
                     if let Some(Some(TemplateChildNode::Text(first))) = nodes.first_mut() {
-                        first.inner.content = TEXT_RE4.replace_all(&first.inner.content, "").to_string();
+                        first.inner.content = replace_first_line_break(&first.inner.content);
                     }
                 }
             }
@@ -274,9 +273,9 @@ impl<'a> ParserContext<'a> {
         let is_pre_boundary = self.in_pre && !was_in_pre;
         let is_v_pre_boundary = self.in_v_pre && !was_in_v_pre;
 
-        let (el_tag, el_is_self_closing) = element.data();
+        let (tag, is_self_closing) = element.data();
 
-        if el_is_self_closing || self.options.is_void_tag.call_once((el_tag,)) {
+        if is_self_closing || self.options.is_void_tag.call_once((tag,)) {
             // #4030 self-closing <pre> tag
             if is_pre_boundary {
                 self.in_pre = false;
@@ -301,26 +300,22 @@ impl<'a> ParserContext<'a> {
         // todo! vue2
 
         // End tag.
-        if self.starts_with_end_tag_open(el_tag) {
+        let el_start = element.loc().start;
+        if self.starts_with_end_tag_open(tag) {
             self.parse_tag(TagType::End, ancestors.last());
         } else {
-            self.emit_error(
-                ErrorCode::XMissingEndTag,
-                Some(0),
-                Some(element.loc().start),
-            );
+            self.emit_error(ErrorCode::XMissingEndTag, Some(0), Some(el_start));
 
             if self.source.is_empty() &&
-                el_tag.eq_ignore_ascii_case("script") &&
+                tag.eq_ignore_ascii_case("script") &&
                 let Some(first) = children.first() &&
                 self.source[first.loc().span()].starts_with("<!==")
             {
                 self.emit_error(ErrorCode::EOFInScriptHtmlCommentLikeText, None, None);
             }
         }
-
+        element.new_loc(self.selection(el_start, None));
         *element.children_mut() = children;
-        element.make_loc(self.selection(element.loc().start, None));
 
         if is_pre_boundary {
             self.in_pre = false;
@@ -337,18 +332,18 @@ impl<'a> ParserContext<'a> {
         let content: &str;
 
         let mut matches = COMMENT_RE.find_iter(self.source);
-        if let Some(matched1) = matches.next() {
+        if let Some(m1) = matches.next() {
             // Regular comment.
-            if matched1.start() <= 3 {
+            if m1.start() <= 3 {
                 self.emit_error(ErrorCode::AbruptClosingOfEmptyComment, None, None);
             }
             if matches.next().is_some() {
                 self.emit_error(ErrorCode::IncorrectlyClosedComment, None, None);
             }
-            content = &self.source[4..matched1.start()];
+            content = &self.source[4..m1.start()];
 
             // Advancing with reporting nested comments.
-            let s = &self.source[0..matched1.start()];
+            let s = &self.source[0..m1.start()];
 
             let mut prev_index = 1;
 
@@ -362,7 +357,7 @@ impl<'a> ParserContext<'a> {
                 }
             }
 
-            self.advance_by(matched1.end() - prev_index + 1);
+            self.advance_by(m1.end() - prev_index + 1);
         } else {
             content = &self.source[4..];
             self.advance_by(self.source.len());
@@ -374,13 +369,16 @@ impl<'a> ParserContext<'a> {
 
     fn parse_text(&mut self, mode: TextMode) -> Node<Text> {
         let end_tokens = if let TextMode::CData = mode {
-            Vec::from(["]]>"])
+            ["]]>", ""]
         } else {
-            Vec::from(["<", self.options.delimiters.0])
+            ["<", self.options.delimiters.0]
         };
         let s_len = self.source.len();
         let mut end_index = s_len;
         for end_token in end_tokens {
+            if end_token.is_empty() {
+                continue;
+            }
             for i in 1..s_len {
                 if self.source[i..].starts_with(end_token) && end_index > i {
                     end_index = i;
@@ -396,11 +394,7 @@ impl<'a> ParserContext<'a> {
 
     fn parse_bogus_comment(&mut self) -> Node<Comment> {
         let start = self.cursor();
-        let content_start = if self.source.chars().next().is_some() {
-            1
-        } else {
-            2
-        };
+        let content_start = self.source.bytes().next().map_or(2, |_| 1);
 
         let content: &str;
         if let Some(close_index) = self.source.find('>') {
@@ -416,35 +410,32 @@ impl<'a> ParserContext<'a> {
 
     fn parse_interpolation(&mut self, mode: TextMode) -> Option<Node<Interpolation>> {
         let (open, close) = self.options.delimiters;
-        // TODO: perf less 2 characters than ts version
-
-        let close_index = if let Some(i) = self.source.find(close) {
-            i
+        let open_len = open.len();
+        let close_index = if let Some(close_index) = self.source[open_len..].find(close) {
+            close_index + open_len
         } else {
             self.emit_error(ErrorCode::XMissingInterpolationEnd, None, None);
             return None;
         };
 
         let start = self.cursor();
-        self.advance_by(open.len());
+        self.advance_by(open_len);
 
         let mut inner_start = self.cursor();
         let mut inner_end = self.cursor();
 
-        let raw_content_length = close_index - open.len();
+        let raw_content_length = close_index - open_len;
         let raw_content = &self.source[..raw_content_length];
         let pre_trim_content = self.parse_text_data(raw_content_length, mode);
         let content = pre_trim_content.trim();
 
-        let start_offset = if let Some(start_offset) = pre_trim_content.find(content) {
-            inner_start.advance_position_with_mutation(raw_content, start_offset);
-            start_offset
-        } else {
-            0
-        };
-
+        let start_offset = pre_trim_content.find(content).map_or(0, |offset| {
+            inner_start.advance_position_with_mutation(raw_content, offset);
+            offset
+        });
         let end_offset =
             raw_content_length - (pre_trim_content.len() - content.len() - start_offset);
+
         inner_end.advance_position_with_mutation(raw_content, end_offset);
         self.advance_by(close.len());
 
@@ -493,11 +484,15 @@ impl<'a> ParserContext<'a> {
     ) -> Option<ElementNode> {
         // Tag open.
         let start = self.cursor();
-        let matched = TAG_OPEN_RE.captures(self.source).unwrap();
-        let tag = &matched[1];
+        //(RegexBuilder::new(r#"^</?([a-z][^\t\r\n\f />]*)"#)
+        //         .case_insensitive(true)
+        //         .build()
+
+        let (index, tag) = parse_tag_name(self.source).unwrap();
+        let tag = tag.as_str();
         let ns = self.options.get_namespace.call_once((tag, parent));
 
-        self.advance_by(matched.get(0).unwrap().end());
+        self.advance_by(index);
         self.advance_spaces();
 
         // save current state in case we need to re-parse attributes with v-pre
@@ -571,14 +566,14 @@ impl<'a> ParserContext<'a> {
             tag.to_string(),
             is_self_closing,
             props,
-            vec![],
+            Vec::with_capacity(3),
             self.selection(start, None),
         ))
     }
 
     fn parse_attributes(&mut self, tag_type: &TagType) -> Vec<AttrsNode> {
-        let mut props: Vec<AttrsNode> = vec![];
-        let mut attr_names = HashSet::default();
+        let mut props: Vec<AttrsNode> = Vec::with_capacity(3);
+        let mut attr_names = HashSet::with_capacity(5);
         while !self.source.is_empty()
             && !self.source.starts_with('>')
             && !self.source.starts_with("/>")
@@ -599,8 +594,7 @@ impl<'a> ParserContext<'a> {
             // https://github.com/vuejs/core/issues/4251
             if let AttrsNode::Attr(attr) = &mut attr {
                 if let Some(attr_value) = &mut attr.inner.value && attr.inner.name == "class" {
-                    attr_value.inner.content = ATTR_VALUE_SPACE_RE
-                        .replace_all(&attr_value.inner.content, " ")
+                    attr_value.inner.content = replace_continuous_whitespace(&attr_value.inner.content)
                         .trim().to_string();
                 }
             }
@@ -608,8 +602,15 @@ impl<'a> ParserContext<'a> {
             if let TagType::Start = tag_type {
                 props.push(attr)
             }
-
-            if MISSING_SPACE_ATTRIBUTES_RE.is_match(self.source) {
+            // Regex::new(r"^[^\t\r\n\f />]")
+            if self
+                .source
+                .bytes()
+                .skip_while(|c| !c.is_ascii_whitespace())
+                .take_while(|c| matches!(c, b'/' | b'>'))
+                .count()
+                > 0
+            {
                 self.emit_error(ErrorCode::MissingWhitespaceBetweenAttributes, None, None);
             }
 
@@ -618,14 +619,22 @@ impl<'a> ParserContext<'a> {
         props
     }
 
-    fn parse_attribute(&mut self, attr_names: &mut HashSet<&'a str>) -> AttrsNode {
+    fn parse_attribute(&mut self, attr_names: &mut HashSet<String>) -> AttrsNode {
         // Name.
         let start = self.cursor();
-        let name = ATTR_NAME_RE.find(self.source).unwrap().as_str();
-        if attr_names.contains(name) {
+        // Regex::new(r"^[^\t\r\n\f />][^\t\r\n\f />=]*")
+        let name: String = self
+            .source
+            .bytes()
+            .skip_while(|&c| c.is_ascii_whitespace() || c == b'/' || c == b'>')
+            .take_while(|&c| !c.is_ascii_whitespace() && c != b'=' && c != b'/' && c != b'>')
+            .map(|c| c as char)
+            .collect();
+
+        if attr_names.contains(&name) {
             self.emit_error(ErrorCode::DuplicateAttribute, None, None);
         }
-        attr_names.insert(name);
+        attr_names.insert(name.clone());
 
         if name.starts_with('=') {
             self.emit_error(
@@ -634,24 +643,22 @@ impl<'a> ParserContext<'a> {
                 None,
             );
         }
-        if let Some(matches) = UNEXPECTED_CHAR_IN_ATTR_NAME_RE.captures(name) {
-            matches
-                .iter()
-                .filter_map(|matched| matched.map(|matched| matched.start()))
-                .for_each(|start| {
-                    self.emit_error(
-                        ErrorCode::UnexpectedCharacterInAttributeName,
-                        Some(start),
-                        None,
-                    )
-                })
-        }
+
+        self.check_unexpected_char_in_attr_name(&name);
+
         self.advance_by(name.len());
 
         // Value.
         let mut attr_value = None;
 
-        if ATTR_VALUE_RE.is_match(self.source) {
+        //  Regex::new(r"^[\t\r\n\f ]*=")
+        if self
+            .source
+            .bytes()
+            .skip_while(u8::is_ascii_whitespace)
+            .take(1)
+            .any(|c| c == b'=')
+        {
             self.advance_spaces();
             self.advance_by(1);
             self.advance_spaces();
@@ -663,8 +670,8 @@ impl<'a> ParserContext<'a> {
 
         let loc = self.selection(start, None);
 
-        if !self.in_v_pre && DIR_RE.is_match(name) {
-            let matched = DIR_NAME_RE.captures(name).unwrap();
+        if !self.in_v_pre && self.check_starts_with_dir(&name) {
+            let matched = DIR_NAME_RE.captures(&name).unwrap();
             let is_prop_shorthand = name.starts_with('.');
             let dir_name = match matched.get(1) {
                 Some(dir_name) => dir_name.as_str(),
@@ -675,17 +682,17 @@ impl<'a> ParserContext<'a> {
 
             let mut arg: Option<Node<Expr>> = None;
 
-            let matched3 = matched.get(3);
+            let m3 = matched.get(3);
 
-            if let Some(matched2) = matched.get(2) {
+            if let Some(m2) = matched.get(2) {
                 let is_slot = dir_name == "slot";
-                let matched2_str = matched2.as_str();
-                let start_offset = name.rfind(matched2_str).unwrap();
+                let m2_str = m2.as_str();
+                let start_offset = name.rfind(m2_str).unwrap();
 
                 let n = start_offset
-                    + matched2.range().len()
-                    + match (is_slot, matched3) {
-                        (true, Some(matched3)) => matched3.end(),
+                    + m2.range().len()
+                    + match (is_slot, m3) {
+                        (true, Some(m3)) => m3.end(),
                         _ => 0,
                     };
 
@@ -693,25 +700,25 @@ impl<'a> ParserContext<'a> {
                     self.get_new_position(start, start_offset),
                     Some(self.get_new_position(start, n)),
                 );
-                let mut content = matched2_str.to_string();
+                let mut content = m2_str.to_string();
                 let mut is_static = true;
 
                 if content.starts_with('[') {
-                    is_static = false;
                     content = if !content.ends_with(']') {
                         self.emit_error(ErrorCode::XMissingDynamicDirectiveArgumentEnd, None, None);
                         &content[1..]
                     } else {
                         &content[1..content.len() - 1]
                     }
-                    .to_string()
+                    .to_string();
+                    is_static = false;
                 } else if is_slot {
                     // #1241 special case for v-slot: vuetify relies extensively on slot
                     // names containing dots. v-slot doesn't have any modifiers and Vue 2.x
                     // supports such usage so we are keeping it consistent with 2.x.
 
-                    if let Some(matched3) = matched3 {
-                        content += matched3.as_str()
+                    if let Some(m3) = m3 {
+                        content += m3.as_str()
                     }
                 }
 
@@ -734,7 +741,7 @@ impl<'a> ParserContext<'a> {
                 value_loc.end = value_loc.start.advance_position_with_clone(&value.inner.content, None);
             }
 
-            let mut modifiers = if let Some(matched3) = matched3 {
+            let mut modifiers = if let Some(matched3) = m3 {
                 matched3.as_str()[1..]
                     .split('.')
                     .map(String::from)
@@ -773,7 +780,7 @@ impl<'a> ParserContext<'a> {
         }
 
         AttrsNode::new_attr(
-            name.to_string(),
+            name,
             attr_value.map(|value| Node::<Text>::new(value.inner.content, value.loc)),
             loc,
         )
@@ -781,7 +788,7 @@ impl<'a> ParserContext<'a> {
 
     fn get_new_position(&self, start: Position, n: usize) -> Position {
         let source = if start.offset <= n {
-            &self.original_source[start.offset..n]
+            unsafe { self.original_source.get_unchecked(start.offset..n) }
         } else {
             ""
         };
@@ -792,13 +799,13 @@ impl<'a> ParserContext<'a> {
         let start = self.cursor();
         let content: String;
 
-        let quote = self.source.chars().next().unwrap();
-        let is_quoted = matches!(quote, '"' | '\'');
+        let quote = self.source.bytes().next().unwrap();
+        let is_quoted = matches!(quote, b'"' | b'\'');
         if is_quoted {
             // Quoted value.
             self.advance_by(1);
 
-            if let Some(end_index) = self.source.find(quote) {
+            if let Some(end_index) = self.source.find(quote as char) {
                 content = self.parse_text_data(end_index, TextMode::AttributeValue);
                 self.advance_by(1);
             } else {
@@ -808,17 +815,8 @@ impl<'a> ParserContext<'a> {
             // Unquoted
             if let Some(matched) = UNQUOTED_RE.find(self.source) {
                 // unexpectedChars
-                if let Some(caps) = UNEXPECTED_CHARS_IN_UNQUOTED_RE.captures(matched.as_str()) {
-                    caps.iter().for_each(|matched| {
-                        if let Some(matched) = matched {
-                            self.emit_error(
-                                ErrorCode::UnexpectedCharacterInUnquotedAttributeValue,
-                                Some(matched.start()),
-                                None,
-                            );
-                        }
-                    })
-                }
+                // Regex::new("[\"'<=`]")
+                self.che_unexpected_chars_in_unquoted(matched.as_str());
                 content = self.parse_text_data(matched.end(), TextMode::AttributeValue);
             } else {
                 return None;
@@ -838,7 +836,7 @@ impl<'a> ParserContext<'a> {
         }
 
         if tag == "component"
-            || tag.starts_with(|c: char| c.is_uppercase())
+            || tag.starts_with(char::is_uppercase)
             || is_core_component(tag).is_some()
             || self
                 .options
@@ -877,7 +875,7 @@ impl<'a> ParserContext<'a> {
 
     fn advance_by(&mut self, n: usize) {
         self.position.advance_position_with_mutation(self.source, n);
-        self.source = &self.source[n..];
+        self.source = unsafe { self.source.get_unchecked(n..) };
     }
 
     fn advance_spaces(&mut self) {
@@ -941,9 +939,125 @@ impl<'a> ParserContext<'a> {
         let end_i = 2 + tag.len();
 
         self.source.starts_with("</")
-            && self.source[2..end_i].eq_ignore_ascii_case(tag)
-            && END_TAG_OPEN_RE.is_match(self.source.get(end_i..).unwrap_or(">"))
+            && unsafe { self.source.get_unchecked(2..end_i) }.eq_ignore_ascii_case(tag)
+            // Regex::new(r"[\t\r\n\f />]")
+            && self
+            .source
+            .get(end_i..)
+            .map_or(true, |s| s.bytes().any(|c| c.is_ascii_whitespace() || c == b'/' || c == b'>'))
     }
+
+    fn check_starts_with_dir(&self, name: &str) -> bool {
+        // Regex::new(r"^(v-[A-Za-z0-9-]|:|\.|@|#)")
+        let name = name.as_bytes();
+        (name.starts_with("v-".as_ref())
+            && name
+                .get(3)
+                .map_or(false, |&c| c.is_ascii_alphanumeric() || c == b'-'))
+            || name
+                .first()
+                .is_some_and(|c| matches!(c, b':' | b'.' | b'@' | b'#'))
+    }
+
+    fn check_unexpected_char_in_attr_name(&self, name: &str) {
+        // Regex::new("[\"'<]")
+        name.bytes()
+            .enumerate()
+            .filter(|item| matches!(item.1, b'"' | b'\'' | b'<'))
+            .for_each(|item| {
+                self.emit_error(
+                    ErrorCode::UnexpectedCharacterInAttributeName,
+                    Some(item.0),
+                    None,
+                )
+            })
+    }
+
+    fn che_unexpected_chars_in_unquoted(&self, chars: &str) {
+        //  Regex::new("[\"'<=`]")
+        chars
+            .bytes()
+            .enumerate()
+            .filter(|item| matches!(item.1, b'"' | b'\'' | b'<' | b'='))
+            .for_each(|item| {
+                self.emit_error(
+                    ErrorCode::UnexpectedCharacterInUnquotedAttributeValue,
+                    Some(item.0),
+                    None,
+                )
+            })
+    }
+}
+
+/// RegexBuilder::new(r#"^</?([a-z][^\t\r\n\f />]*)"#)
+//         .case_insensitive(true)
+//         .build()
+fn parse_tag_name(input: &str) -> Option<(usize, String)> {
+    let mut tag_name = String::with_capacity(5);
+    let mut in_name = false;
+    let mut name_end = 0;
+    for (i, c) in input.bytes().enumerate() {
+        if in_name {
+            if c == b'/' {
+                continue;
+            } else if c.is_ascii_alphabetic() {
+                tag_name.push(c as char);
+                name_end = i;
+            } else if c.is_ascii_whitespace() || c == b'>' {
+                return Some((name_end + 1, tag_name));
+            } else {
+                return None;
+            }
+        } else if c == b'<' {
+            in_name = true;
+        } else {
+            return None;
+        }
+    }
+    None
+}
+
+/// Regex::new(r"^\r?\n")
+fn replace_first_line_break(content: &str) -> String {
+    let mut i = 0;
+    let mut is_n = false;
+    content.replace(
+        |c| {
+            if !is_n && i < 2 {
+                i += 1;
+                match c as u8 {
+                    b'\r' => true,
+                    b'\n' => {
+                        is_n = true;
+                        true
+                    }
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        },
+        "",
+    )
+}
+
+/// \s+
+fn replace_continuous_whitespace(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut last_whitespace = false;
+
+    for c in s.bytes() {
+        if c.is_ascii_whitespace() {
+            if !last_whitespace {
+                result.push(' ');
+                last_whitespace = true;
+            }
+        } else {
+            result.push(c as char);
+            last_whitespace = false;
+        }
+    }
+    result
 }
 
 pub fn is_special_template_directive(name: &str) -> bool {

@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{cmp::min, ops::Range};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position {
@@ -45,20 +45,16 @@ impl Position {
         let mut last_new_line = 0;
         let mut has_new_line = false;
 
-        source
-            .chars()
-            .enumerate()
-            .take(n)
-            .filter(|item| item.1 == '\n')
-            .for_each(|item| {
+        let source = source.as_bytes();
+        for i in 0..min(n, source.len()) {
+            if source[i] == 10 {
                 lines_cnt += 1;
-                last_new_line = item.0;
+                last_new_line = i;
                 has_new_line = true;
-            });
-
+            }
+        }
         self.offset += n;
         self.line += lines_cnt;
-
         if has_new_line {
             self.column = n - last_new_line;
         } else {
@@ -81,16 +77,11 @@ impl SourceLocation {
     }
 
     pub fn inner_range(&mut self, source: &str, offset: usize, len: usize) -> Self {
-        // /// __TEST__
-        // assert!(offset <= self.source.len());
-        // let source = &self.source[offset..offset + len];
         let mut new_loc = SourceLocation {
             start: self.start.advance_position_with_clone(source, Some(offset)),
             end: self.end,
         };
         if len > 0 {
-            // /// __TEST__
-            // assert!(offset + length <= self.source.len());
             new_loc
                 .end
                 .advance_position_with_mutation(&source[new_loc.span()], offset + len);
