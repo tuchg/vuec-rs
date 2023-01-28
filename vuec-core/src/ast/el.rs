@@ -1,7 +1,11 @@
 use std::fmt::Debug;
 
 use crate::ast::{
-    attr::AttrsNode, expr::CallExpr, js_child::JSChildNode, template_child::TemplateChildNode,
+    attr::AttrsNode,
+    codegen::CodegenNode,
+    expr::{CacheExpr, CallExpr, SimpleExpr},
+    js_child::JSChildNode,
+    template_child::TemplateChildNode,
     ElementType, NameSpace, Node, NodeType, PhantomType, SourceLocation,
 };
 
@@ -195,15 +199,23 @@ impl ElementNode {
             ElementNode::Template(el) => (&el.inner.tag, el.inner.is_self_closing),
         }
     }
+    pub fn codegen(&self) -> Option<CodegenNode> {
+        match &self {
+            ElementNode::Plain(el) => todo!(),
+            ElementNode::Component(el) => todo!(),
+            ElementNode::SlotOutlet(el) => todo!(),
+            ElementNode::Template(el) => todo!(),
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum PlainElementCodegen {
     VNodeCall,
     /// when hoisted
-    SimpleExpr,
+    SimpleExpr(Node<SimpleExpr>),
     /// when cached by v-once
-    CacheExpr,
+    CacheExpr(Node<CacheExpr>),
     /// when cached by v-memo
     MemoExpr,
 }
@@ -212,7 +224,7 @@ pub enum PlainElementCodegen {
 pub enum ComponentCodegen {
     VNodeCall,
     /// when cached by v-once
-    CacheExpr,
+    CacheExpr(Node<CacheExpr>),
     /// when cached by v-memo
     MemoExpr,
 }
@@ -226,5 +238,5 @@ pub enum SlotOutletCodegen {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct TemplateLit {
-    elements: Vec<Node<JSChildNode>>,
+    pub elements: Vec<JSChildNode>,
 }

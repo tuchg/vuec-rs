@@ -9,7 +9,8 @@ use crate::{
     parse::TextMode,
     re::DECODE_RE,
     runtime_helpers::RuntimeHelper,
-    transforms::{DirectiveTransform, HoistTransform, NodeTransform},
+    transform::{DirectiveTransform, HoistTransform, NodeTransform},
+    __DEV__,
 };
 
 pub struct ErrorHandlingOptions {
@@ -89,6 +90,7 @@ pub enum BindingType {
 // TODO: BindingMetadata
 type BindingMetadata = ();
 
+#[derive(Clone)]
 pub struct SharedTransformCodegenOptions {
     /// Transform expressions like {{ foo }} to `_ctx.foo`.
     /// If this option is false, the generated code will be wrapped in a
@@ -96,7 +98,7 @@ pub struct SharedTransformCodegenOptions {
     /// - This is force-enabled in module mode, since modules are by default strict
     /// and cannot use `with`
     /// @default mode === 'module'
-    prefix_identifiers: bool,
+    pub prefix_identifiers: bool,
     /// Control whether generate SSR-optimized render functions instead.
     /// The resulting function must be attached to the component via the
     /// `ssrRender` option instead of `render`.
@@ -105,32 +107,46 @@ pub struct SharedTransformCodegenOptions {
     ///  - context.ssr = false
     ///
     /// see `subTransform` in `ssrTransformComponent.ts`
-    ssr: bool,
+    pub ssr: bool,
     /// Indicates whether the compiler generates code for SSR,
     /// it is always true when generating code for SSR,
     /// regardless of whether we are generating code for SSR's fallback branch,
     /// this means that when the compiler generates code for SSR's fallback branch:
     ///  - context.ssr = false
     ///  - context.in_ssr = true
-    in_ssr: bool,
+    pub in_ssr: bool,
     /// Optional binding metadata analyzed from script - used to optimize
     /// binding access when `prefix_identifiers` is enabled.
-    binding_metadata: BindingMetadata,
+    pub binding_metadata: Option<BindingMetadata>,
     /// Compile the function for inlining inside setup().
     /// This allows the function to directly access setup() local bindings.
-    inline: bool,
+    pub inline: bool,
     /// Indicates that transforms and codegen should try to output valid TS code
-    is_ts: bool,
+    pub is_ts: bool,
     /// Filename for source map generation.
     /// Also used for self-recursive reference in templates
     /// @default 'template.vue.html'
-    filename: String,
+    pub filename: String,
 }
 
-pub struct TransformOptions<HT: ParentNode> {
+impl Default for SharedTransformCodegenOptions {
+    fn default() -> Self {
+        Self {
+            prefix_identifiers: false,
+            ssr: false,
+            in_ssr: false,
+            binding_metadata: None,
+            inline: false,
+            is_ts: false,
+            filename: "template.vue.html".to_string(),
+        }
+    }
+}
+
+pub struct TransformOptions {
     /// Hoist static VNodes and props objects to `_hoisted_x` constants
     /// @default false
-    hoist_static: bool,
+    pub hoist_static: bool,
     /// Cache v-on handlers to avoid creating new inline functions on each render,
     /// also avoids the need for dynamically patching the handlers by wrapping it.
     /// e.g `@click="foo"` by default is compiled to `{ onClick: foo }`. With this
@@ -141,7 +157,7 @@ pub struct TransformOptions<HT: ParentNode> {
     /// - Requires "prefix_identifiers" to be enabled because it relies on scope
     /// analysis to determine if a handler is safe to cache.
     /// @default false
-    cache_handlers: bool,
+    pub cache_handlers: bool,
     // /**
     //  * A list of parser plugins to enable for `@babel/parser`, which is used to
     //  * parse expressions in bindings and interpolations.
@@ -149,35 +165,36 @@ pub struct TransformOptions<HT: ParentNode> {
     //  */
     // expression_plugins ?: ParserPlugin[]
     /// SFC scoped styles ID
-    scope_id: Option<String>,
+    pub scope_id: Option<String>,
     /// Indicates this SFC template has used :slotted in its styles
     /// Defaults to `true` for backwards compatibility - SFC tooling should set it
     /// to `false` if no `:slotted` usage is detected in `<style>`
-    slotted: bool,
+    pub slotted: bool,
     /// SFC `<style vars>` injection string
     /// Should already be an object expression, e.g. `{ 'xxxx-color': color }`
     /// needed to render inline CSS variables on component root
-    ssr_css_vars: Option<String>,
-    is_builtin_component: Option<fn(tag: String) -> RuntimeHelper>,
+    pub ssr_css_vars: Option<String>,
+    pub is_builtin_component: Option<fn(tag: String) -> RuntimeHelper>,
     /// Used by some transforms that expects only native elements
-    is_custom_element: Option<fn(tag: String) -> bool>,
+    pub is_custom_element: Option<fn(tag: String) -> bool>,
     /// An array of node transforms to be applied to every AST node.
-    node_transforms: Vec<NodeTransform>,
+    pub node_transforms: Vec<NodeTransform>,
     /// An object of { name: transform } to be applied to every directive attribute
     /// node found on element nodes.
-    directive_transforms: HashMap<String, DirectiveTransform>,
+    pub directive_transforms: HashMap<String, DirectiveTransform>,
     /// An optional hook to transform a node being hoisted.
     /// used by compiler-dom to turn hoisted nodes into stringified HTML vnodes.
     /// @default null
-    transform_hoist: Option<HoistTransform<HT>>,
+    pub transform_hoist: Option<HoistTransform<ParentNode>>,
     /// If the pairing runtime provides additional built-in elements, use this to
     /// mark them as built-in so the compiler will generate component vnodes
     /// for them.
-    compact_options: Option<CompilerCompactOptions>,
-    error_handling: Option<ErrorHandlingOptions>,
-    codegen_options: SharedTransformCodegenOptions,
+    pub compact_options: Option<CompilerCompactOptions>,
+    pub error_handling: ErrorHandlingOptions,
+    pub codegen_options: SharedTransformCodegenOptions,
 }
 
+#[derive(Clone)]
 pub enum CodegenMode {
     /// `module` mode will generate ES module import statements for helpers
     /// and export the render function as the default export.
@@ -189,6 +206,7 @@ pub enum CodegenMode {
     Function,
 }
 
+#[derive(Clone)]
 pub struct CodegenOptions {
     /// - `module` mode will generate ES module import statements for helpers
     /// and export the render function as the default export.
@@ -197,28 +215,43 @@ pub struct CodegenOptions {
     /// available (or passed by wrapping the code with an IIFE). It is meant to be
     /// used with `new Function(code)()` to generate a render function at runtime.
     /// @default 'function'
-    mode: CodegenMode,
+    pub mode: CodegenMode,
     /// Generate source map?
     /// @default false
-    source_map: bool,
+    pub source_map: bool,
     /// SFC scoped styles ID
-    scope_id: Option<String>,
+    pub scope_id: Option<String>,
     /// Option to optimize helper import bindings via variable assignment
     /// (only used for webpack code-split)
     /// @default false
-    optimize_imports: bool,
+    pub optimize_imports: bool,
     /// Customize where to import runtime helpers from.
     /// @default 'vue'
-    runtime_module_name: String,
+    pub runtime_module_name: String,
     /// Customize where to import ssr runtime helpers
     /// @default 'vue/server-renderer'
-    ssr_runtime_module_name: String,
+    pub ssr_runtime_module_name: String,
     /// Customize the global variable name of `Vue` to get helpers from
     /// in function mode
     /// @default 'Vue'
-    runtime_global_name: String,
+    pub runtime_global_name: String,
 
-    codegen_options: SharedTransformCodegenOptions,
+    pub inner: SharedTransformCodegenOptions,
+}
+
+impl Default for CodegenOptions {
+    fn default() -> Self {
+        Self {
+            mode: CodegenMode::Function,
+            source_map: false,
+            scope_id: None,
+            optimize_imports: false,
+            runtime_module_name: "vue".to_string(),
+            ssr_runtime_module_name: "vue/server-renderer".to_string(),
+            runtime_global_name: "Vue".to_string(),
+            inner: SharedTransformCodegenOptions::default(),
+        }
+    }
 }
 
 // TODO: reuse multiple options
@@ -255,7 +288,7 @@ impl Default for ParserOptions {
                     })
                     .to_string()
             },
-            comments: true,
+            comments: __DEV__,
             is_native_tag: None,
             is_builtin_component: None,
             whitespace: WhiteSpaceStrategy::Condense,
@@ -263,7 +296,7 @@ impl Default for ParserOptions {
     }
 }
 
-impl<HT: ParentNode> Default for TransformOptions<HT> {
+impl Default for TransformOptions {
     fn default() -> Self {
         Self {
             is_builtin_component: None,
@@ -282,7 +315,7 @@ impl<HT: ParentNode> Default for TransformOptions<HT> {
                 prefix_identifiers: false,
                 ssr: false,
                 in_ssr: false,
-                binding_metadata: (),
+                binding_metadata: None,
                 inline: false,
                 is_ts: false,
                 filename: "".to_string(),

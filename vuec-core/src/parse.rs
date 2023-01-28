@@ -1,10 +1,13 @@
 use std::collections::HashSet;
 
+use ast::template_child::TemplateChildNode::*;
+
 use crate::{
+    ast,
     ast::{
         attr::{AttributeValue, AttrsNode},
         el::ElementNode,
-        expr::Expr,
+        expr::ExprNode,
         parent::Root,
         template_child::{Comment, Interpolation, TemplateChildNode, Text},
         utils::{Position, SourceLocation},
@@ -12,7 +15,7 @@ use crate::{
     },
     errors::{CompilerError, ErrorCode},
     options::{ParserOptions, WhiteSpaceStrategy},
-    re::{COMMENT_RE, DIR_NAME_RE, UNQUOTED_RE},
+    re::{COMMENT_RE, DIR_RE, UNQUOTED_RE},
     runtime_helpers::RuntimeHelper,
 };
 
@@ -34,14 +37,16 @@ pub struct Parser;
 
 impl Parser {
     pub fn base_parse(content: &str, options: Option<ParserOptions>) -> Node<Root> {
-        let options = options.unwrap_or(Default::default());
+        let options = options.unwrap_or_default();
         let mut ctx = ParserContext::new(content, options);
 
         let start = ctx.cursor();
         let children = ctx.parse_children(&mut Vec::with_capacity(5), TextMode::Data);
 
         let loc = Some(ctx.selection(start, None));
-        Node::<Root>::new(children, loc)
+        let mut root = Node::<Root>::new(children, loc);
+        root.inner.source = ctx.original_source.to_string();
+        root
     }
 }
 
@@ -182,7 +187,7 @@ impl<'a> ParserContext<'a> {
 
                 for i in 0..nodes_len {
                     let node = &nodes[i];
-                    if let Some(TemplateChildNode::Text(node)) = node {
+                    if let Some(Text(node)) = node {
                         let mut text = Node::<Text>::default();
                         // to reduce mem alloc
                         text.clone_from(node);
@@ -208,11 +213,11 @@ impl<'a> ParserContext<'a> {
                                         (Some(Some(prev)), Some(Some(next))) => {
                                             if should_condense {
                                                 match (prev, next) {
-                                                    (TemplateChildNode::Comment(_), TemplateChildNode::Comment(_)) |
-                                                    (TemplateChildNode::Comment(_), TemplateChildNode::Element(_)) |
-                                                    (TemplateChildNode::Element(_), TemplateChildNode::Comment(_)) => true,
+                                                    (Comment(_), Comment(_)) |
+                                                    (Comment(_), Element(_)) |
+                                                    (Element(_), Comment(_)) => true,
                                                     // Regex::new("[\r\n]")
-                                                    (TemplateChildNode::Element(_), TemplateChildNode::Element(_)) => text.inner.content.bytes().any(|c| matches!(c,b'\n'|b'\r')),
+                                                    (Element(_), Element(_)) => text.inner.content.bytes().any(|c| matches!(c,b'\n'|b'\r')),
                                                     (_, _) => false
                                                 }
                                             } else { false }
@@ -241,9 +246,9 @@ impl<'a> ParserContext<'a> {
                         }
                         // sync change of text_node
                         if nodes[i].is_some() {
-                            nodes[i] = Some(TemplateChildNode::Text(text));
+                            nodes[i] = Some(Text(text));
                         }
-                    } else if let Some(TemplateChildNode::Comment(_)) = node && !self.options.comments {
+                    } else if let Some(Comment(_)) = node && !self.options.comments {
                         // Remove comment nodes if desired by configuration.
                         nodes[i] = None;
                     }
@@ -253,7 +258,7 @@ impl<'a> ParserContext<'a> {
                     self.options.is_pre_tag.call_once((parent.tag(), )) {
                     // remove leading newline per html spec
                     // https://html.spec.whatwg.org/multipage/grouping-content.html#the-pre-element// remove leading newline
-                    if let Some(Some(TemplateChildNode::Text(first))) = nodes.first_mut() {
+                    if let Some(Some(Text(first))) = nodes.first_mut() {
                         first.inner.content = replace_first_line_break(&first.inner.content);
                     }
                 }
@@ -440,7 +445,7 @@ impl<'a> ParserContext<'a> {
         self.advance_by(close.len());
 
         Some(Node::<Interpolation>::new(
-            Node::new_simple_expr(
+            ExprNode::new_simple_expr(
                 content.to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -487,7 +492,6 @@ impl<'a> ParserContext<'a> {
         //(RegexBuilder::new(r#"^</?([a-z][^\t\r\n\f />]*)"#)
         //         .case_insensitive(true)
         //         .build()
-
         let (index, tag) = parse_tag_name(self.source).unwrap();
         let tag = tag.as_str();
         let ns = self.options.get_namespace.call_once((tag, parent));
@@ -671,7 +675,7 @@ impl<'a> ParserContext<'a> {
         let loc = self.selection(start, None);
 
         if !self.in_v_pre && self.check_starts_with_dir(&name) {
-            let matched = DIR_NAME_RE.captures(&name).unwrap();
+            let matched = DIR_RE.captures(&name).unwrap();
             let is_prop_shorthand = name.starts_with('.');
             let dir_name = match matched.get(1) {
                 Some(dir_name) => dir_name.as_str(),
@@ -680,7 +684,7 @@ impl<'a> ParserContext<'a> {
                 _ => "slot",
             };
 
-            let mut arg: Option<Node<Expr>> = None;
+            let mut arg: Option<ExprNode> = None;
 
             let m3 = matched.get(3);
 
@@ -714,7 +718,7 @@ impl<'a> ParserContext<'a> {
                     is_static = false;
                 } else if is_slot {
                     // #1241 special case for v-slot: vuetify relies extensively on slot
-                    // names containing dots. v-slot doesn't have any modifiers and Vue 2.x
+                    // names containing dots. v-slot doesn't have any Modifiers and Vue 2.x
                     // supports such usage so we are keeping it consistent with 2.x.
 
                     if let Some(m3) = m3 {
@@ -722,7 +726,7 @@ impl<'a> ParserContext<'a> {
                     }
                 }
 
-                arg = Some(Node::<Expr>::new_simple_expr(
+                arg = Some(ExprNode::new_simple_expr(
                     content,
                     is_static,
                     if is_static {
@@ -760,7 +764,7 @@ impl<'a> ParserContext<'a> {
                 dir_name.to_string(),
                 arg,
                 attr_value.map(|value| {
-                    Node::new_simple_expr(
+                    ExprNode::new_simple_expr(
                         value.inner.content.to_string(),
                         false,
                         // Treat as non-constant by default. This can be potentially set to
@@ -1075,10 +1079,10 @@ pub fn is_core_component(tag: &str) -> Option<RuntimeHelper> {
 }
 
 pub fn push_node(nodes: &mut Vec<Option<TemplateChildNode>>, node: TemplateChildNode) {
-    if let TemplateChildNode::Text(text) = &node {
+    if let Text(text) = &node {
         // Merge if both this and the previous node are text and those are
         // consecutive. This happens for cases like "a < b".
-        if let Some(Some(TemplateChildNode::Text(prev))) = nodes.last_mut() {
+        if let Some(Some(Text(prev))) = nodes.last_mut() {
             if prev.loc.end.offset == text.loc.start.offset {
                 prev.inner.content += &text.inner.content;
                 prev.loc.end = text.loc.end;

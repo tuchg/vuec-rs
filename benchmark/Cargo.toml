@@ -1,0 +1,18 @@
+[package]
+name = "benchmark"
+version = "0.0.0"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+authors.workspace = true
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vuec-core = { path = "../vuec-core" }
+regex.workspace = true
+
+#[[bench]]
+#name = "parse"
+#path = "benches/my_benchmark.rs"
+#harness = false

@@ -6,9 +6,10 @@ open-source community work at the lowest cost, while also providing high perform
 ## Roadmap
 
 - [x] core
-    - [x] parser
-    - [ ] transforms
-    - [ ] compiler
+  - [x] parser
+  - [ ] transforms
+  - [ ] codegen
+  - [ ] compiler
 - [ ] dom
 - [ ] sfc
 - [ ] ssr

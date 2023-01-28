@@ -6,7 +6,10 @@ members = [
     "vuec-ssr",
     "vuec-cli",
     "vuec-plugins",
+    "benchmark"
 ]
+workspace.exclude = ["benchmark"]
+
 [workspace.package]
 name = "vuec-rs"
 version = "0.0.0"
@@ -21,6 +24,7 @@ repository = "https://github.com/tuchg/vuec-rs"
 #std = { default-features = false, features = ["panic_immediate_abort"] }
 once_cell = "1"
 regex = "1"
+sourcemap = "6"
 #ahash = "0"
 
 #dotenv="0.15.0"

@@ -1,4 +1,11 @@
-use crate::ast::{el::ElementNode, expr::Expr, utils::SourceLocation, Node, NodeType};
+use crate::ast::{
+    attr::AttrsNode,
+    codegen::CodegenNode,
+    el::ElementNode,
+    expr::{CacheExpr, CompoundExpr, ExprNode, IfCondExpr},
+    utils::SourceLocation,
+    Node, NodeType,
+};
 
 /// ElementNode | InterpolationNode | CompoundExprNode | TextNode| CommentNode| IfNode|
 /// IfBranchNode| ForNode|TextCallNode
@@ -6,27 +13,60 @@ use crate::ast::{el::ElementNode, expr::Expr, utils::SourceLocation, Node, NodeT
 pub enum TemplateChildNode {
     Element(ElementNode),
     Interpolation(Node<Interpolation>),
-    CompoundExpr,
+    CompoundExpr(Node<CompoundExpr>),
     Text(Node<Text>),
     Comment(Node<Comment>),
-    If,
-    IfBranch,
+    If(Node<If>),
+    IfBranch(Node<IfBranch>),
     For,
     TextCall,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
+pub struct IfBranch {
+    is_template_if: bool,
+    cond: Option<ExprNode>,
+    children: Vec<TemplateChildNode>,
+    user_key: AttrsNode,
+}
+
+/// <div v-if v-once>
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum IfCodegenNode {
+    IfCond(Node<IfCondExpr>),
+    CacheExpr(Node<CacheExpr>),
+}
+
+impl Into<CodegenNode> for IfCodegenNode {
+    fn into(self) -> CodegenNode {
+        match self {
+            IfCodegenNode::IfCond(node) => unimplemented!(),
+            IfCodegenNode::CacheExpr(node) => unimplemented!(),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct If {
+    pub branches: Vec<Node<IfBranch>>,
+    pub codegen: IfCodegenNode,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Interpolation {
-    pub content: Node<Expr>,
+    pub content: ExprNode,
 }
 
 impl Node<Interpolation> {
-    pub fn new(content: Node<Expr>, loc: SourceLocation) -> Self {
+    pub fn new(content: ExprNode, loc: SourceLocation) -> Self {
         Self {
             kind: NodeType::Interpolation,
             loc,
             inner: Interpolation { content },
         }
+    }
+    pub fn loc(&self) -> &SourceLocation {
+        &self.loc
     }
 }
 
@@ -61,7 +101,7 @@ impl Default for Node<Text> {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Comment {
-    content: String,
+    pub content: String,
 }
 
 impl Node<Comment> {
@@ -75,6 +115,19 @@ impl Node<Comment> {
 }
 
 impl TemplateChildNode {
+    pub fn kind(&self) -> NodeType {
+        match self {
+            TemplateChildNode::Element(_) => NodeType::Element,
+            TemplateChildNode::Interpolation(_) => NodeType::Interpolation,
+            TemplateChildNode::CompoundExpr(_) => NodeType::CompoundExpr,
+            TemplateChildNode::Text(_) => NodeType::Text,
+            TemplateChildNode::Comment(_) => NodeType::Comment,
+            TemplateChildNode::If(_) => NodeType::If,
+            TemplateChildNode::IfBranch(_) => NodeType::IfBranch,
+            TemplateChildNode::For => NodeType::For,
+            TemplateChildNode::TextCall => NodeType::TextCall,
+        }
+    }
     pub fn new_el(node: ElementNode) -> Self {
         TemplateChildNode::Element(node)
     }
@@ -92,11 +145,11 @@ impl TemplateChildNode {
         match self {
             TemplateChildNode::Element(node) => node.loc(),
             TemplateChildNode::Interpolation(node) => &node.loc,
-            TemplateChildNode::CompoundExpr => unimplemented!(),
+            TemplateChildNode::CompoundExpr(_) => unimplemented!(),
             TemplateChildNode::Text(node) => &node.loc,
             TemplateChildNode::Comment(node) => &node.loc,
-            TemplateChildNode::If => unimplemented!(),
-            TemplateChildNode::IfBranch => unimplemented!(),
+            TemplateChildNode::If(node) => &node.loc,
+            TemplateChildNode::IfBranch(node) => &node.loc,
             TemplateChildNode::For => unimplemented!(),
             TemplateChildNode::TextCall => unimplemented!(),
         }

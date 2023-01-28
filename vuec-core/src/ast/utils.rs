@@ -31,6 +31,16 @@ pub const LOC_STUB: SourceLocation = SourceLocation {
     },
 };
 
+impl Default for Position {
+    fn default() -> Self {
+        Position {
+            offset: 0,
+            line: 1,
+            column: 1,
+        }
+    }
+}
+
 impl Default for SourceLocation {
     fn default() -> Self {
         LOC_STUB

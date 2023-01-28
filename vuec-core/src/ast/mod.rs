@@ -1,4 +1,5 @@
 pub mod attr;
+pub mod codegen;
 pub mod el;
 pub mod expr;
 pub mod js_child;
@@ -30,7 +31,7 @@ pub struct Node<N: Clone + Debug + PartialEq + Eq> {
 
 impl<N: Clone + Debug + PartialEq + Eq> Eq for Node<N> {}
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Copy)]
 pub enum NodeType {
     Root,
     Element,
@@ -78,6 +79,12 @@ pub enum ConstantType {
     CanSkipPatch,
     CanHoist,
     CanStringify,
+}
+
+impl Default for ConstantType {
+    fn default() -> Self {
+        Self::NotConstant
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]

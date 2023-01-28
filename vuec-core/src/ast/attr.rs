@@ -1,5 +1,5 @@
 use crate::{
-    ast::{expr::Expr, template_child::Text, utils::SourceLocation, Node, NodeType},
+    ast::{expr::ExprNode, template_child::Text, utils::SourceLocation, Node, NodeType},
     transforms::v_for::ForParseResult,
 };
 
@@ -16,8 +16,8 @@ impl AttrsNode {
 
     pub fn new_dir(
         name: String,
-        arg: Option<Node<Expr>>,
-        expr: Option<Node<Expr>>,
+        arg: Option<ExprNode>,
+        expr: Option<ExprNode>,
         modifiers: Vec<String>,
         loc: SourceLocation,
     ) -> Self {
@@ -59,8 +59,8 @@ impl Node<AttributeValue> {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Directive {
     pub name: String,
-    pub arg: Option<Node<Expr>>,
-    pub expr: Option<Node<Expr>>,
+    pub arg: Option<ExprNode>,
+    pub expr: Option<ExprNode>,
     pub modifiers: Vec<String>,
     /// optional property to cache the expression parse result for v-for
     pub parse_result: Option<ForParseResult>,
@@ -79,8 +79,8 @@ impl Node<Attribute> {
 impl Node<Directive> {
     pub fn new(
         name: String,
-        arg: Option<Node<Expr>>,
-        expr: Option<Node<Expr>>,
+        arg: Option<ExprNode>,
+        expr: Option<ExprNode>,
         modifiers: Vec<String>,
         loc: SourceLocation,
     ) -> Self {

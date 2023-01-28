@@ -2,23 +2,42 @@ use std::collections::HashSet;
 
 use crate::{
     ast::{
+        codegen::CodegenNode,
+        el::ElementNode,
         js_child::JSChildNode,
         template_child::TemplateChildNode,
         utils::{SourceLocation, LOC_STUB},
         Node, NodeType,
     },
     runtime_helpers::RuntimeHelper,
-    transforms::ImportItem,
+    transform::ImportItem,
 };
 
-/// RootNode | ElementNode | IfBranchNode | ForNode\
-pub trait ParentNode {
-    fn children(&self) -> &Vec<TemplateChildNode>;
+/// RootNode | ElementNode | IfBranchNode | ForNode
+pub enum ParentNode {
+    Root(Node<Root>),
+    Element(ElementNode),
+    IfBranch,
+    For,
 }
 
-impl ParentNode for Node<Root> {
-    fn children(&self) -> &Vec<TemplateChildNode> {
-        &self.inner.children
+impl ParentNode {
+    pub fn children(&self) -> &Vec<TemplateChildNode> {
+        match self {
+            ParentNode::Root(root) => &root.inner.children,
+            ParentNode::Element(el) => el.children(),
+            ParentNode::IfBranch => unimplemented!(),
+            ParentNode::For => unimplemented!(),
+        }
+    }
+
+    pub(crate) fn children_mut(&mut self) -> &mut Vec<TemplateChildNode> {
+        match self {
+            ParentNode::Root(root) => &mut root.inner.children,
+            ParentNode::Element(el) => el.children_mut(),
+            ParentNode::IfBranch => unimplemented!(),
+            ParentNode::For => unimplemented!(),
+        }
     }
 }
 
@@ -34,8 +53,8 @@ pub struct Root {
     pub helpers: HashSet<RuntimeHelper>,
 
     pub ssr_helpers: Option<Vec<RuntimeHelper>>,
-    pub codegen_node: Option<Node<RootCodegen>>,
-
+    pub codegen_node: Option<CodegenNode>,
+    pub source: String,
     // v2 compat only
     pub filters: Option<Vec<String>>,
 }
@@ -63,15 +82,9 @@ impl Node<Root> {
                 temps: 0,
                 ssr_helpers: None,
                 codegen_node: None,
+                source: String::new(),
                 filters: None,
             },
         }
     }
-}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum RootCodegen {
-    TemplateChild,
-    JSChild,
-    BlockStmt,
 }

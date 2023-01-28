@@ -27,7 +27,7 @@ lazy_re!(COMMENT_RE, Regex::new(r"--(!)?>"));
 // lazy_re!(ATTR_NAME_RE, Regex::new(r"^[^\t\r\n\f />][^\t\r\n\f />=]*"));
 // lazy_re!(ATTR_VALUE_RE, Regex::new(r"^[\t\r\n\f ]*="));
 lazy_re!(
-    DIR_NAME_RE,
+    DIR_RE,
     RegexBuilder::new(r"(?:^v-([a-z0-9-]+))?(?:(?::|^\.|^@|^#)(\[[^\]]+\]|[^\.]+))?(.+)?$")
         .case_insensitive(true)
         .build()
@@ -51,8 +51,8 @@ lazy_re!(
     Regex::new(r"([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)")
 );
 
-/// This regex doesn't cover the case if key or index aliases have destructuring,
-/// but those do not make sense in the first place, so this works in practice.
+// This regex doesn't cover the case if key or index aliases have destructuring,
+// but those do not make sense in the first place, so this works in practice.
 lazy_re!(
     FOR_ITERATOR_RE,
     Regex::new(r",([^,\}\]]*)(?:,([^,\}\]]*))?$")

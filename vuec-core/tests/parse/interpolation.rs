@@ -1,5 +1,6 @@
 use vuec_core::{
     ast::{
+        expr::ExprNode,
         template_child::{Interpolation, TemplateChildNode},
         utils::{Position, SourceLocation},
         ConstantType, Node,
@@ -16,7 +17,7 @@ fn simple_interpolation() {
     assert_eq!(
         interpolation,
         &TemplateChildNode::new_interpolation(Node::<Interpolation>::new(
-            Node::new_simple_expr(
+            ExprNode::new_simple_expr(
                 "message".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -57,7 +58,7 @@ fn it_can_have_tag_like_notation() {
     assert_eq!(
         interpolation,
         &TemplateChildNode::new_interpolation(Node::<Interpolation>::new(
-            Node::new_simple_expr(
+            ExprNode::new_simple_expr(
                 "a<b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -102,7 +103,7 @@ fn it_can_have_tag_like_notation_3() {
     assert_eq!(
         interpolation,
         &TemplateChildNode::new_interpolation(Node::<Interpolation>::new(
-            Node::new_simple_expr(
+            ExprNode::new_simple_expr(
                 r#""</div>""#.to_string(),
                 false,
                 // The `constType` is the default value and will be determined in
@@ -155,7 +156,7 @@ fn custom_delimiters() {
     assert_eq!(
         interpolation,
         &TemplateChildNode::new_interpolation(Node::<Interpolation>::new(
-            Node::new_simple_expr(
+            ExprNode::new_simple_expr(
                 "msg".to_string(),
                 false,
                 ConstantType::NotConstant,

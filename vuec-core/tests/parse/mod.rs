@@ -60,16 +60,16 @@ foo
         let bar_inner = &bar.inner.content;
         offset += 3;
         assert_eq!(
-            bar_inner.loc.start,
+            bar_inner.loc().start,
             Position {
                 offset,
                 line: 2,
                 column: 8,
             }
         );
-        offset += source[bar_inner.loc.span()].len();
+        offset += source[bar_inner.loc().span()].len();
         assert_eq!(
-            bar_inner.loc.end,
+            bar_inner.loc().end,
             Position {
                 offset,
                 line: 2,
@@ -114,16 +114,16 @@ foo
         let baz_inner = &baz.inner.content;
         offset += 3;
         assert_eq!(
-            baz_inner.loc.start,
+            baz_inner.loc().start,
             Position {
                 offset,
                 line: 2,
                 column: 22,
             }
         );
-        offset += source[baz_inner.loc.span()].len();
+        offset += source[baz_inner.loc().span()].len();
         assert_eq!(
-            baz_inner.loc.end,
+            baz_inner.loc().end,
             Position {
                 offset,
                 line: 2,

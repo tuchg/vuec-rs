@@ -2,6 +2,7 @@ use vuec_core::{
     ast::{
         attr::AttrsNode,
         el::ElementNode,
+        expr::ExprNode,
         template_child::{TemplateChildNode, Text},
         utils::{Position, SourceLocation},
         ConstantType, ElementType, NameSpace, Node,
@@ -909,7 +910,7 @@ fn directive_with_value() {
         &AttrsNode::new_dir(
             "if".to_string(),
             None,
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -958,7 +959,7 @@ fn directive_with_argument() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "click".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1008,7 +1009,7 @@ fn directive_with_dyn_argument() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "event".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1125,7 +1126,7 @@ fn directive_with_argument_and_modifiers() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "click".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1174,7 +1175,7 @@ fn directive_with_dyn_argument_and_modifiers() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a.b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1266,7 +1267,7 @@ fn v_bind_shorthand() {
         directive,
         &AttrsNode::new_dir(
             "bind".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1283,7 +1284,7 @@ fn v_bind_shorthand() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1331,7 +1332,7 @@ fn v_bind_dot_prop_shorthand() {
         directive,
         &AttrsNode::new_dir(
             "bind".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1348,7 +1349,7 @@ fn v_bind_dot_prop_shorthand() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1397,7 +1398,7 @@ fn v_bind_shorthand_with_modifier() {
         directive,
         &AttrsNode::new_dir(
             "bind".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1414,7 +1415,7 @@ fn v_bind_shorthand_with_modifier() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1463,7 +1464,7 @@ fn v_on_shorthand() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1480,7 +1481,7 @@ fn v_on_shorthand() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1528,7 +1529,7 @@ fn v_on_shorthand_with_modifier() {
         directive,
         &AttrsNode::new_dir(
             "on".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1545,7 +1546,7 @@ fn v_on_shorthand_with_modifier() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "b".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1594,7 +1595,7 @@ fn v_slot_shorthand() {
         directive,
         &AttrsNode::new_dir(
             "slot".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "a".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1611,7 +1612,7 @@ fn v_slot_shorthand() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "{ b }".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1718,7 +1719,7 @@ fn v_pre() {
         div_without_pre.props.first().unwrap(),
         &AttrsNode::new_dir(
             "bind".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "id".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1735,7 +1736,7 @@ fn v_pre() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "foo".to_string(),
                 false,
                 ConstantType::NotConstant,
@@ -1798,7 +1799,7 @@ fn self_closing_v_pre() {
         div_without_pre.props.first().unwrap(),
         &AttrsNode::new_dir(
             "bind".to_string(),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "id".to_string(),
                 true,
                 ConstantType::CanStringify,
@@ -1815,7 +1816,7 @@ fn self_closing_v_pre() {
                     },
                 },
             )),
-            Some(Node::new_simple_expr(
+            Some(ExprNode::new_simple_expr(
                 "foo".to_string(),
                 false,
                 ConstantType::NotConstant,

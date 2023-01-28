@@ -16,6 +16,7 @@ authors.workspace = true
 mimalloc = { version = "*", default-features = false }
 once_cell.workspace = true
 regex.workspace = true
+sourcemap.workspace = true
 #rand.workspace = true
 #dotenv.workspace = true
 #dotenv_codegen.workspace = true
