@@ -9,7 +9,7 @@ open-source community work at the lowest cost, while also providing high perform
 >
 
 ## Design
-* Try using pattern of `enum + struct` to impl OOP in rust
+* Try using pattern of `enum + struct` to impl ~OOP~ in rust
   * Deconstructing the tedious
   * Numerous conditional branches
 
